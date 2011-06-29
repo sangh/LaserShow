@@ -17,7 +17,7 @@ These are the hard-coded things that _every_ class sees.  Included are:
 
   * (XGridSize,YGridSize): The grid size, which is a 2-D array with indexes < these values.  I'm thinking the grid will be quadrant one of a Cartesian Plane (the position (0,0) is the bottom-left).
   * DelayMove: The amount of time needed for each position change (not quite sure how to keep track of time yet)
-  * DelayOff, DelayOn: The amount of time needy to turn on or off the laser
+  * DelayOff, DelayOn: The amount of time needd to turn on or off the laser
   * DelayGlow: Amount of time a spot stays lit after the laser moves off it.
 
 
@@ -62,3 +62,7 @@ This class will take some Transforms (or Glyphs) and send them to the Laser.  Th
         x = x % (2 * pi)
 
 
+Future Notes
+============
+
+In the end I see this being used by using the graphical glyph creator, and then writing/using some sequences on the glyphs/transforms, looking at the output by using the Pyglet laser class, then hooking up the program to the real laser class and seeing what it looks like.
