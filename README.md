@@ -66,3 +66,13 @@ Future Notes
 ============
 
 In the end I see this being used by using the graphical glyph creator, and then writing/using some sequences on the glyphs/transforms, looking at the output by using the Pyglet laser class, then hooking up the program to the real laser class and seeing what it looks like.
+
+
+
+
+Pyglet
+======
+
+Pyglet is not used in the app, really, it is just used for the glyph creator and the dummy-software-laser-emulator.
+
+The symlink just points to the checked in version dir, which can change, see the header file.
