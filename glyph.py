@@ -10,9 +10,9 @@ def pointIsValid( pt ):
     if "on" == pt  or  "off" == pt:
         return True
     if (    pt[0] < 0
-        or  pt[0] >= consts['XGridSize']
+        or  pt[0] >= XGridSize
         or  pt[1] < 0
-        or  pt[1] >= consts['YGridSize']
+        or  pt[1] >= YGridSize
         ):
         return False
     return True

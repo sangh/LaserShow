@@ -31,14 +31,21 @@ if (    'header.py' not in fs
 # Hard-coded things (constants), see the readme.
 # These should be set to match the real laser.
 consts = {
-    'XGridSize':    100,
-    'YGridSize':    100,
-    'DelayOff':     10,
-    'DelayOn':      200,
-    'DelayMove':    5,
-    'DelayGlow':    20,
-    'SpotRadius':   .5,
+    'XGridSize':    100,    # Number of laser stops (cells) horizontaly
+    'YGridSize':    100,    #                           " vertically
+    'SpotRadius':   .5,     # How much of a cell is the laser spot
+    'PixPerCell':   10,     # Num pixels per cell edge (det. win. size)
+
+    'DelayOff':     10,     # How many tick to turn laser off
+    'DelayOn':      200,    # Num ticks to turn on laser
+    'DelayMove':    5,      # How long to move, maybe this is max (?)
+    'DelayGlow':    20,     # How long to illuminate a cell in ticks
+    'SecPerTick':   .001,   # .001 means one tick is a millisecond
 }
+# Now unpack so that each string above is it's own variable name.
+# So things like ``window.size = PixPerCell * XGridSize'' work.
+for k in consts:
+    exec('%s = %s'%(k,consts[k]))
 
 # Checks if the given dict has all the values above.
 def hasAllConsts( d ):
