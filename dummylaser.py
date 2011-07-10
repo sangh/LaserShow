@@ -20,21 +20,29 @@ label = pyglet.text.Label('Hello, world',
     x=window.width//2, y=window.height//2,
     anchor_x='center', anchor_y='center')
 
+# We only want to calculate once.
+gridDrawNpts = 0
+gridDrawPts = ()
+xmin = pad
+ymin = pad
+xmax = window.width - pad
+ymax = window.height - pad
+def line(x0,y0,x1,y1):
+    global gridDrawNpts, gridDrawPts
+    gridDrawPts = gridDrawPts + ( x0, y0, x1, y1 )
+    gridDrawNpts = gridDrawNpts + 2
+for x in range( xmin, xmax, PixPerCell ):
+    line( x, ymin, x, ymax )
+line( xmax, ymin, xmax, ymax )
+for y in range( ymin, ymax, PixPerCell ):
+    line( xmin, y, xmax, y )
+line( xmin, ymax, xmax, ymax )
+del line, xmin, ymin, xmax, ymax
 def gridDraw():
-    xmin = pad
-    ymin = pad
-    xmax = window.width - pad
-    ymax = window.height - pad
+    global gridDrawNpts, gridDrawPts
     pyglet.gl.glColor4f( .3, .3, .3, .3 )
-    def line(x0,y0,x1,y1):
-        pyglet.graphics.draw( 2, pyglet.gl.GL_LINES,
-            ('v2i', ( x0, y0, x1, y1 ) ) )
-    for x in range( xmin, xmax, PixPerCell ):
-        line( x, ymin, x, ymax )
-    line( xmax, ymin, xmax, ymax )
-    for y in range( ymin, ymax, PixPerCell ):
-        line( xmin, y, xmax, y )
-    line( xmin, ymax, xmax, ymax )
+    pyglet.graphics.draw( gridDrawNpts, pyglet.gl.GL_LINES,
+        ( 'v2i', gridDrawPts ) )
 
 # Take in a cell:
 #   (x,y) such that 0 <= x < XGridSize, 0 <= y < YGridSize
@@ -44,6 +52,8 @@ def cell2pix(x,y):
 
 def spotDraw():
     x,y=5,7 # Random spot
+    pyglet.gl.glColor4f( 1, 1, 1, 1 )
+    print cell2pix(x,y)
     pyglet.graphics.draw( 1, pyglet.gl.GL_POINTS,
         ('v2i', cell2pix(x,y) ) )
 
