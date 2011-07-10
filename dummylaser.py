@@ -52,7 +52,16 @@ def cell2pix( x, y ):
     cx = x * PixPerCell + t
     cy = y * PixPerCell + t
     return ( cx, cy )
-
+def pix2cell( px, py ):
+    px = px - pad
+    if 0 > px: return None
+    py = py - pad
+    if 0 > py: return None
+    x = int( float(px) / PixPerCell )
+    if x >= XGridSize: return None
+    y = int( float(py) / PixPerCell )
+    if y >= YGridSize: return None
+    return ( x, y )
 def spotDraw( x, y, i ):
     x, y = cell2pix( x, y )
     # Draw middle
@@ -76,19 +85,36 @@ def spotDraw( x, y, i ):
 
 
 
+spotsGrid = []
+for x in range(XGridSize):
+    tmp = []
+    for y in range(YGridSize):
+        tmp.append(0)
+    spotsGrid.append(tmp)
 
+def allSpotsDraw(dt):
+    global spotsGrid
+    for x in range(XGridSize):
+        for y in range(YGridSize):
+            if 0 < spotsGrid[x][y]:
+                spotDraw( x, y, spotsGrid[x][y] )
+                spotsGrid[x][y] = spotsGrid[x][y] - ( dt / SecPerTick / DelayGlow )
 
+pyglet.clock.schedule_interval(allSpotsDraw, SecPerTick)
 
-
-
-
+@window.event
+def on_mouse_motion(x, y, dx, dy):
+    ret = pix2cell(x,y)
+    if ret is not None:
+        spotsGrid[ ret[0] ][ ret[1] ] = 1.0
 
 @window.event
 def on_draw():
-    window.clear()
-    label.draw()
+    #window.clear()
+    #label.draw()
     gridDraw()
-    spotDraw(5,7,1)
-    spotDraw(7,9,.5)
-    
+    allSpotsDraw(0)
+
+
+
 pyglet.app.run()

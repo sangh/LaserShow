@@ -39,8 +39,8 @@ consts = {
     'DelayOff':     10,     # How many tick to turn laser off
     'DelayOn':      200,    # Num ticks to turn on laser
     'DelayMove':    5,      # How long to move, maybe this is max (?)
-    'DelayGlow':    20,     # How long to illuminate a cell in ticks
-    'SecPerTick':   .001,   # .001 means one tick is a millisecond
+    'DelayGlow':    20,    # How many tick to fade out.
+    'SecPerTick':   .1,    # .1 means one tick is a tenth of a second
 }
 # Now unpack so that each string above is it's own variable name.
 # So things like ``window.size = PixPerCell * XGridSize'' work.
