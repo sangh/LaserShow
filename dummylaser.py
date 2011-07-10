@@ -47,18 +47,32 @@ def gridDraw():
 # Take in a cell:
 #   (x,y) such that 0 <= x < XGridSize, 0 <= y < YGridSize
 # return a pixel coordinate of the center of the cell.
-def cell2pix(x,y):
-    return (x*PixPerCell + (PixPerCell//2)) , (y*PixPerCell + (PixPerCell//2))
+def cell2pix( x, y ):
+    t = pad + PixPerCell // 2
+    cx = x * PixPerCell + t
+    cy = y * PixPerCell + t
+    return ( cx, cy )
 
-def spotDraw():
-    x,y=5,7 # Random spot
-    pyglet.gl.glColor4f( 1, 1, 1, 1 )
-    print cell2pix(x,y)
+def spotDraw( x, y, i ):
+    x, y = cell2pix( x, y )
+    # Draw middle
+    pyglet.gl.glColor4f( i, i, i, i )
     pyglet.graphics.draw( 1, pyglet.gl.GL_POINTS,
-        ('v2i', cell2pix(x,y) ) )
+        ('v2i', ( x, y ) ) )
+    # SpotRadius * PixPerCell is pixle radius
+    npr = int( SpotRadius * PixPerCell )
+    fracDec = float(i)/npr
+    for j in range(1, npr+1,1):
+        pts = []
+        i = i - fracDec
 
+        for xt,yt in ((x+j, y),(x-j,y),(x+j,y+j),(x-j,y-j),(x-j,y+j),(x+j,y-j),(x,y+j),(x,y-j)):
+            pts.append( xt )
+            pts.append( yt )
 
-
+        pyglet.gl.glColor4f( i, i, i, i )
+        pyglet.graphics.draw( 8, pyglet.gl.GL_POINTS,
+            ('v2i', pts ) )
 
 
 
@@ -74,6 +88,7 @@ def on_draw():
     window.clear()
     label.draw()
     gridDraw()
-    spotDraw()
+    spotDraw(5,7,1)
+    spotDraw(7,9,.5)
     
 pyglet.app.run()

@@ -31,9 +31,9 @@ if (    'header.py' not in fs
 # Hard-coded things (constants), see the readme.
 # These should be set to match the real laser.
 consts = {
-    'XGridSize':    100,    # Number of laser stops (cells) horizontaly
-    'YGridSize':    100,    #                           " vertically
-    'SpotRadius':   .5,     # How much of a cell is the laser spot
+    'XGridSize':    50,    # Number of laser stops (cells) horizontaly
+    'YGridSize':    30,    #                           " vertically
+    'SpotRadius':   .9,     # How much of a cell is the laser spot
     'PixPerCell':   10,     # Num pixels per cell edge (det. win. size)
 
     'DelayOff':     10,     # How many tick to turn laser off
