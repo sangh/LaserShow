@@ -1,6 +1,10 @@
 #!/usr/bin/python
 
 from header import *
+try:
+    import numpy
+except:
+    numpy = False
 
 sys.path.append("pyglet-1.1.4")
 import pyglet
@@ -85,12 +89,15 @@ def spotDraw( x, y, i ):
 
 
 
-spotsGrid = []
-for x in range(XGridSize):
-    tmp = []
-    for y in range(YGridSize):
-        tmp.append(0)
-    spotsGrid.append(tmp)
+if( numpy ):
+    spotsGrid = numpy.zeros([XGridSize,YGridSize], float)
+else:
+    spotsGrid = []
+    for x in range(XGridSize):
+        tmp = []
+        for y in range(YGridSize):
+            tmp.append(0)
+        spotsGrid.append(tmp)
 
 def allSpotsDraw(dt):
     global spotsGrid
