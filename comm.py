@@ -3,70 +3,82 @@
 from header import *
 
 
-def plist(peri=None,cmd=None):
+def plist( peri = None ):
     "List the peripherals.  See the readme."
-    if peri is None:
-        if cmd is not None:
-            print "No peripheral given, but command given, makes no sense."
-        else:
-            for i in range(len(peripherals)):
-                print
-                plist(i)
+    if peri in Peripherals:
+        print "Peripheral  %3d   \"%s\":"%(
+            peri, Peripherals[peri][0] )
+        for cmd in Peripherals[peri][1]:
+            print "    Command %3d   \"%s\"."%(
+                cmd, Commands[cmd] )
+        for t in Peripherals[peri][2]:
+            print "      Target%3d   \"%s\"."%(
+            t, Peripherals[peri][2][t] )
+    elif peri is None:
+        for i in Peripherals:
+            print
+            plist(i)
     else:
-        if peri >= len(peripherals):
-            print "Invalid peripheral: %d."%(peri)
-        elif cmd is None:
-            print "Peripheral  %3d   %s:"%( peri, peripherals[peri][0] )
-            for i in range(len(peripherals[peri][1])):
-                plist(peri,i)
-        elif cmd >= len(peripherals[peri][1]):
-            print "Invaild command \"%d\" for peripheral \"%d\"."%(cmd,peri)
-        else:
-            print "    Command %3d, %3d   %s."%( peri, cmd, peripherals[peri][1][cmd] )
+        print "Invalid peripheral: %d."%(peri)
+
+def rawSendCmd( peri, cmd, arg ):
+    "Send a command to peri with arg.  Everything is 3-byte packets."
+    "No error checking is done, only all of peri, cmd, & arg must be"
+    "integres between 0 and 255 inclusive."
+    "Returns True if it command was sent (probably), False otherwise."
+    try:
+        return clientThreadSend( chr( peri ) + chr( cmd ) + chr( arg ) )
+    except TypeError:
+        print "One of ( peri, cmd, arg ) = ",
+        print "( %s, %s, %s ) is not an int."%( peri, cmd, arg )
+        return False
+    except ValueError:
+        print "One of ( peri, cmd, arg ) = ",
+        print "( %s, %s, %s ) is out of range [0,255]."%( peri, cmd, arg )
+        return False
 
 def setTarget( peri, target ):
     "Send command to set a stepper motor to ths given target number."
     "Use plist() to see what the numbers are for, and the readme for examples."
     "Returns True if it command was sent (probably), False otherwise."
 
-    if peri < 2  or peri >= len(peripherals):
-        print "Peripheral %d is not a stepper motor or is invalid."%( peri )
-        return False
-    if target >= len(peripherals[peri][1]):
-        print "Invalid target \"%d\" for peripheral \"%d\"."%( target, peri )
-        return False
-
-    return clientThreadSend( chr( peri ) + chr( target ) + '\x00' )
-
-
-def XYLoadGlyph( peri, slot ):
-    "peri = 0 is the fast one, 1, is the slow one."
-    "Tell the XY to use whatever glyph is in slot."
-    "Return True if (probably) sent, False otherwise."
-    if 0 == peri:
-        if slot > XYNumSlots:
-            print "Slot \"%d\" is invalid for the fast XY."%( slot )
+    if peripheralCommandIsValid( peri, ord('T') ):
+        if target in Peripherals[peri][2]:
+            return rawSendCmd( peri, ord('T'), target )
+        else:
+            print "Invalid target \"%d\" for peripheral \"%d\"."%( target, peri )
             return False
-        return clientThreadSend( '\x00' + chr( slot ) + '\x00' )
-    elif 1 == peri:
-        if slot > SlowXYNumSlots:
-            print "Slot \"%d\" is invalid for the slow XY."%( slot )
-            return False
-        return clientThreadSend( '\x01' + chr( slot ) + '\x00' )
-    else:
-        print "Peri \"%d\" is not an XY." %( peri )
+
+
+def selectGlyphXY( slot ):
+    "Make the fast XY display the glyph in `slot'."
+    if slot >= NumSlotsXY:
+        print "Slot \"%d\" is invalid for the fast XY."%( slot )
         return False
+    return rawSendCmd( ord('X'), 3, slot )
 
+def selectGlyphXYSlow( slot ):
+    "Make the slow XY display the glyph in `slot'."
+    if slot >= NumSlotsXYSlow:
+        print "Slot \"%d\" is invalid for the slow XY."%( slot )
+        return False
+    return rawSendCmd( ord('x'), 3, slot )
 
-
-def XYSetGlyph( peri, slot, glyphName ):
-    "Send a glyph to an XY."
+def sendGlyphXY( slot, glyph ):
+    "Send glyph to the XY."
     return False
 
-def XYStartRotation( peri, dirSpeed ):
-    "tell an XY to start rotating."
+def sendGlyphXYSlow( slot, glyph ):
+    "Send glyph to the slow XY."
     return False
 
+def rotateXY( angle ):
+    "tell an XY to move to angle."
+    return False
+
+def shrinkXY( angle ):
+    "tell an XY to shrink."
+    return False
 
 
 
@@ -91,7 +103,7 @@ def clientThreadRun():
                 return s
             except:
                 if 0 == t:
-                    print "Problem connecting to ",
+                    print "Problem connecting to",
                     print "%s at post %d... will keep trying."%( Host, Port )
                     t = 10000
                 else:

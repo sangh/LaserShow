@@ -23,7 +23,7 @@ if (    'header.py' not in fs
     or  not os.path.isdir("glyphs")
     ):
     bye(1, "Are we not in the src dir?")
-
+del fs
 
 
 # Hard-coded things (constants), see the readme.
@@ -33,8 +33,8 @@ consts = {
     'YGridSize':    256,    #                           " vertically
     'XYExpandPts':  1000,   # How many points to expand a glyph out to.
     'SlowXYExpandPts':  1000,   # How many points to expand a glyph out to.
-    'XYNumSlots':   3,      # How many slots does the fast XY have.
-    'SlowXYNumSlots':   3,      # How many slots does the slow XY have.
+    'NumSlotsXY':   3,      # How many slots does the fast XY have.
+    'NumSlotsSlowXY':   3,      # How many slots does the slow XY have.
 
     'SpotRadius':   .9,     # How much of a cell is the laser spot
     'PixPerCell':   2,     # Num pixels per cell edge (det. win. size)
@@ -80,40 +80,56 @@ def doAllConstsMatch( d ):
 
 
 # This holds what is currently in the slots.
-XYSlots = []
-for i in range( XYNumSlots ):
-    XYSlots.append( None )
-SlowXYSlots = []
-for i in range( SlowXYNumSlots ):
-    SlowXYSlots.append( None )
+slotsXY = [ None for i in range( NumSlotsXY ) ]
+slotsSlowXY = [ None for i in range( NumSlotsSlowXY ) ]
 
-# This is the list of devices: stepper motors and the two XY~s.
-# The index into the tuple is the number, and what is sent over
-# the socket as it's id.
-# I'm not set on the interface, but to have a terminal, I need something.
-# For the steppers it's just the position that is sent (2 bytes, 3rd is unused),
-# And for the XY~s 3 bytes at a time are sent for each command.
-# The `N' below refers to the 3rd byte sent.
-peripherals = (
-    ("XY, the fast one.", (  # N is the 3rd byte as an argument.
-        "Send new glyph and write into slot N (so then the next XYExpandPts sets of 3 bytes sent are the glyph)",
-        "Load glyph from slot N",  # This includes blanking information.
-        "Rotate with dir/speed N (need to figure out how to represent)",
-        "Grow/shrink with size/speed N (need to figure out how to represent)",
-    )),
-    ("SlowXY", (
-        "Send new glyph and write into slot N (so then the next SlowXYExpandPts sets of 3 bytes sent are the glyph)",
-        "Load glygh from slot N",
-    )),
-    ("One stepper motor description.", (
-        "0th target is the XY~s.",
-        "Target one is ...",
-        "Target the second is undescribed.",
-    )),
-    ("Stepper 2!", (
-        "XY",
-        "Unknown 2nd target.",
-        "Index 2's target",
-    )),
-)
+# All possible commands
+# Right now the key (the byte sent) is random, should decide on real numbers.
+# Need to change in the Peripheral list as well.
+Commands = {
+    3:          "Load glyph from slot 'arg'.",
+    ord('T'):   "Set target to `arg'",
+    193:        "Send glyph and write into slot `arg'.",  # After this cmd the next XYExpandPts sets of 3 bytes sent are the glyph
+    112:        "Shrink to `arg',", # If arg is 0 glyph is a point, if 255 it is full-size.
+    ord('R'):   "Rotate clockwise `arg' units.", # If arg is 0 then it's upright, 64 or 191 is on it's side, 127 is upside-down
+}
+# List is the accepted commands from above.
+Peripherals = {
 
+    ord('X'):   ("XY, the fast one.",
+        ( 3, 193, 112, ord('R'), ), {
+        } ),  # No target descriptions.
+
+    ord('x'):   ("Slow XY",
+        ( 3, 193, ), {
+        } ),  # No target descriptions.
+
+    10:         ("One stepper motor description.",
+        ( ord('T'), ), {
+            0: "0th target is the XY~s.",
+            1: "Target one is ...",
+            2: "Target the second is undescribed.",
+        } ),
+    11:         ("Stepper 2!",
+        ( ord('T'), ), {
+            0: "XY",
+            1: "Unknown 2nd target.",
+            8: "Index 2's target",
+        } ),
+}
+
+def peripheralCommandIsValid( peri, cmd ):
+    "Returns True unless peri is not defined above,"
+    " or that peri doesn't accept cmd, "
+    "arguments are not checked."
+    if peri not in Peripherals.keys():
+        print "Peripheral \"%s\" is not found."%( peri )
+        return False
+    if cmd not in Commands.keys():
+        print "Command \"%s\" is not valid."%( cmd )
+        return False
+    if cmd not in Peripherals[peri][1]:
+        print "Peripheral \"%s (%s)\" does not accept command \"%s (%s)\"." % (
+            peri, Peripherals[peri][0], cmd, Commands[cmd] )
+        return False
+    return True
