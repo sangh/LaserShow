@@ -1,1 +1,1 @@
-{"name": "point-50-50", "SlowXYExpandPts": 1000, "YGridSize": 256, "NumSlotsXY": 3, "NumSlotsSlowXY": 3, "Host": "localhost", "XYExpandPts": 1000, "path": [[50, 50]], "XGridSize": 256, "Port": 5555}
+{"name": "point-50-50", "YGridSize": 256, "path": [[50, 50]], "XGridSize": 256}

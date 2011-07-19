@@ -3,7 +3,7 @@ from header import *
 
 # This used to be a class, but I want to use json w/o all the
 # manual mangling needed, so it's just going to be a dictionary.
-# It must have all the consts (for type checking) and keys for
+# It must have X and Y grid points and keys for
 # the 'name' and a 'path' (list of (x,y) points or "on"/"off" cmds).
 
 def pointIsValid( pt ):
@@ -27,7 +27,9 @@ def pathIsValid( path ):
     return True
 
 def glyphIsValid( g ):
-    if not doAllConstsMatch( g ):
+    if not XGridSize == g['XGridSize']:
+        return False
+    if not YGridSize == g['YGridSize']:
         return False
     if 'name' not in g:
         wrn("Glyph does not have a name.")
@@ -92,6 +94,6 @@ def glyphCreate( name, path ):
         else:
             newpath.append( v )
     d = { 'name': str(name), 'path': newpath }
-    for k in consts:
-        d[k] = consts[k]
+    d['XGridSize'] = XGridSize
+    d['YGridSize'] = YGridSize
     return d
