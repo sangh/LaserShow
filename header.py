@@ -31,8 +31,8 @@ del fs
 consts = {
     'XGridSize':    256,    # Number of laser stops (cells) horizontaly
     'YGridSize':    256,    #                           " vertically
-    'XYExpandPts':  1000,   # How many points to expand a glyph out to.
-    'SlowXYExpandPts':  1000,   # How many points to expand a glyph out to.
+    'ExpandPtsXY':  1000,   # How many points to expand a glyph out to.
+    'ExpandPtsSlowXY':  500,   # How many points to expand a glyph out to.
     'NumSlotsXY':   3,      # How many slots does the fast XY have.
     'NumSlotsSlowXY':   3,      # How many slots does the slow XY have.
 
@@ -80,7 +80,7 @@ slotsSlowXY = [ None for i in range( NumSlotsSlowXY ) ]
 Commands = {
     3:          "Load glyph from slot 'arg'.",
     ord('T'):   "Set target to `arg'",
-    193:        "Send glyph and write into slot `arg'.",  # After this cmd the next XYExpandPts sets of 3 bytes sent are the glyph
+    193:        "Send glyph and write into slot `arg'.",  # After this cmd the next ExpandPtsXY sets of 3 bytes sent are the glyph
     112:        "Shrink to `arg',", # If arg is 0 glyph is a point, if 255 it is full-size.
     ord('R'):   "Rotate clockwise `arg' units.", # If arg is 0 then it's upright, 64 or 191 is on it's side, 127 is upside-down
 }
@@ -114,13 +114,13 @@ def peripheralCommandIsValid( peri, cmd ):
     " or that peri doesn't accept cmd, "
     "arguments are not checked."
     if peri not in Peripherals.keys():
-        print "Peripheral \"%s\" is not found."%( peri )
+        wrn("Peripheral \"%s\" is not found."%( peri ))
         return False
     if cmd not in Commands.keys():
-        print "Command \"%s\" is not valid."%( cmd )
+        wrn("Command \"%s\" is not valid."%( cmd ))
         return False
     if cmd not in Peripherals[peri][1]:
-        print "Peripheral \"%s (%s)\" does not accept command \"%s (%s)\"." % (
-            peri, Peripherals[peri][0], cmd, Commands[cmd] )
+        wrn("Peripheral \"%s (%s)\" does not accept command \"%s (%s)\"." % (
+            peri, Peripherals[peri][0], cmd, Commands[cmd] ))
         return False
     return True
