@@ -75,7 +75,10 @@ def glyphLoad( name ):
         else:
             p.append( pt )
     g['path'] = p
-    return g
+    if glyphIsValid( g ):
+        return g
+    else:
+        raise NameError("Glyph \"%s\" is not valid."%(str(name)))
 
 def glyphCreate( name, path ):
     if not pathIsValid( path ):

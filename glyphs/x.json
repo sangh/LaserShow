@@ -1,1 +1,0 @@
-{"SpotRadius": 0.5, "name": "x", "YGridSize": 100, "DelayOff": 10, "DelayOn": 200, "DelayGlow": 20, "path": ["off", [0, 0], "on", [50, 50], [99, 99], "off", [0, 99], "on", [50, 50], [99, 0], "off"], "XGridSize": 100, "DelayMove": 5}

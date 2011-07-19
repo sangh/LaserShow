@@ -36,15 +36,6 @@ consts = {
     'NumSlotsXY':   3,      # How many slots does the fast XY have.
     'NumSlotsSlowXY':   3,      # How many slots does the slow XY have.
 
-    'SpotRadius':   .9,     # How much of a cell is the laser spot
-    'PixPerCell':   2,     # Num pixels per cell edge (det. win. size)
-
-    'DelayOff':     10,     # How many tick to turn laser off
-    'DelayOn':      200,    # Num ticks to turn on laser
-    'DelayMove':    5,      # How long to move, maybe this is max (?)
-    'DelayGlow':    20,    # How many tick to fade out.
-    'SecPerTick':   .1,    # .1 means one tick is a tenth of a second
-
     'Host':         "localhost",
     'Port':         5555,
 }
