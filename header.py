@@ -32,12 +32,11 @@ consts = {
     'XGridSize':    256,    # Number of laser stops (cells) horizontaly
     'YGridSize':    256,    #                           " vertically
     'ExpandPtsXY':  1000,   # How many points to expand a glyph out to.
-    'ExpandPtsSlowXY':  500,   # How many points to expand a glyph out to.
+    'ExpandPtsSlowXY':  500,#                           " for the slow one.
     'NumSlotsXY':   3,      # How many slots does the fast XY have.
-    'NumSlotsSlowXY':   3,      # How many slots does the slow XY have.
+    'NumSlotsSlowXY':   3,  # How many slots does the slow XY have.
 
-    'Host':         "localhost",
-    'Port':         5555,
+    'SendToHosts':          (("localhost",5555),("localhost",4444)),
 }
 # Now unpack so that each string above is it's own variable name.
 # So things like ``window.size = PixPerCell * XGridSize'' work.
@@ -71,8 +70,8 @@ def doAllConstsMatch( d ):
 
 
 # This holds what is currently in the slots.
-slotsXY = [ None for i in range( NumSlotsXY ) ]
-slotsSlowXY = [ None for i in range( NumSlotsSlowXY ) ]
+SlotsXY = [ None for i in range( NumSlotsXY ) ]
+SlotsSlowXY = [ None for i in range( NumSlotsSlowXY ) ]
 
 # All possible commands
 # Right now the key (the byte sent) is random, should decide on real numbers.
@@ -83,29 +82,28 @@ Commands = {
     193:        "Send glyph and write into slot `arg'.",  # After this cmd the next ExpandPtsXY sets of 3 bytes sent are the glyph
     112:        "Shrink to `arg',", # If arg is 0 glyph is a point, if 255 it is full-size.
     ord('R'):   "Rotate clockwise `arg' units.", # If arg is 0 then it's upright, 64 or 191 is on it's side, 127 is upside-down
+    99:         "Move `arg' ticks clockwise", # That is ticks on the stepper motor.
+    12:         "Move `arg' ticks counterclockwise", # That is ticks on the stepper motor.
+    5:          "Set current tick to index `arg'",
 }
 # List is the accepted commands from above.
 Peripherals = {
 
-    ord('X'):   ("XY, the fast one.",
-        ( 3, 193, 112, ord('R'), ), {
-        } ),  # No target descriptions.
-
-    ord('x'):   ("Slow XY",
-        ( 3, 193, ), {
-        } ),  # No target descriptions.
-
-    10:         ("One stepper motor description.",
-        ( ord('T'), ), {
-            0: "0th target is the XY~s.",
-            1: "Target one is ...",
-            2: "Target the second is undescribed.",
+    ord('X'):   ("XY, the fast one.", {} ),  # No index (target) descriptions.
+    ord('x'):   ("Slow XY", {} ),  # No index (target) descriptions.
+    10:         ("One stepper motor description.", {
+            0:      "0th target is the XY~s.",
+            1:      "Target one is ...",
+            2:      "Target the second is undescribed.",
         } ),
-    11:         ("Stepper 2!",
-        ( ord('T'), ), {
-            0: "XY",
-            1: "Unknown 2nd target.",
-            8: "Index 2's target",
+    11:         ("Stepper 2!", {
+            0:      "XY",
+            1:      "Unknown 2nd target.",
+            8:      "Blank target, like it's off.",
+        } ),
+    99:         ("3rd Stepper", {
+            3:      "XY",
+            8:      "Another index/target",
         } ),
 }
 
@@ -119,8 +117,20 @@ def peripheralCommandIsValid( peri, cmd ):
     if cmd not in Commands.keys():
         wrn("Command \"%s\" is not valid."%( cmd ))
         return False
-    if cmd not in Peripherals[peri][1]:
-        wrn("Peripheral \"%s (%s)\" does not accept command \"%s (%s)\"." % (
-            peri, Peripherals[peri][0], cmd, Commands[cmd] ))
-        return False
     return True
+
+
+def plist( peri = None ):
+    "Print out the peripherals, but you could just look at header.py"
+    for peri in Peripherals:
+        wrn("")
+        wrn("Peripheral  %3d   \"%s\":"%(
+            peri, Peripherals[peri][0] ))
+        for t in Peripherals[peri][1]:
+            wrn("      Target%3d   \"%s\"."%(
+            t, Peripherals[peri][1][t] ))
+    wrn("")
+    for cmd in Commands:
+        wrn("Command     %3d   \"%s\"."%(
+            cmd, Commands[cmd] ))
+

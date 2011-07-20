@@ -4,24 +4,6 @@ from header import *
 import glyph as glyphModule
 
 
-def plist( peri = None ):
-    "List the peripherals.  See the readme."
-    if peri in Peripherals:
-        wrn("Peripheral  %3d   \"%s\":"%(
-            peri, Peripherals[peri][0] ))
-        for cmd in Peripherals[peri][1]:
-            wrn("    Command %3d   \"%s\"."%(
-                cmd, Commands[cmd] ))
-        for t in Peripherals[peri][2]:
-            wrn("      Target%3d   \"%s\"."%(
-            t, Peripherals[peri][2][t] ))
-    elif peri is None:
-        for i in Peripherals:
-            wrn("")
-            plist(i)
-    else:
-        wrn("Invalid peripheral: %d."%(peri))
-
 def rawSendCmd( peri, cmd, arg ):
     "Send a command to peri with arg.  Everything is 3-byte packets."
     "No error checking is done, only all of peri, cmd, & arg must be"
@@ -44,11 +26,7 @@ def setTarget( peri, target ):
     "Returns True if it command was sent (probably), False otherwise."
 
     if peripheralCommandIsValid( peri, ord('T') ):
-        if target in Peripherals[peri][2]:
-            return rawSendCmd( peri, ord('T'), target )
-        else:
-            wrn("Invalid target \"%d\" for peripheral \"%d\"."%( target, peri ) )
-            return False
+        return rawSendCmd( peri, ord('T'), target )
 
 
 def selectGlyphXY( slot ):
@@ -81,7 +59,7 @@ def sendGlyphXY( slot, glyph ):
         wrn("Slot \"%d\" is invalid for the fast XY."%( slot ) )
         return False
     if sendGlyphToPeri( ord('X'), slot, glyph, ExpandPtsXY ):
-        slotsXY[slot] = glyph['name']
+        SlotsXY[slot] = glyph['name']
         return True
     else:
         return False
@@ -93,7 +71,7 @@ def sendGlyphSlowXY( slot, glyph ):
         wrn("Slot \"%d\" is invalid for the slow XY."%( slot ) )
         return False
     if sendGlyphToPeri( ord('x'), slot, glyph, ExpandPtsSlowXY ):
-        slotsSlowXY[slot] = glyph['name']
+        SlotsSlowXY[slot] = glyph['name']
         return True
     else:
         return False
@@ -136,25 +114,36 @@ def clientThreadRun():
                 return s
             except:
                 if 0 == t:
-                    wrn("Problem connecting to" +
-                        "%s at post %d... will keep trying."%( Host, Port ) )
+                    wrn("Problem connecting to " +
+                        "%s at port %d... will keep trying."%( h, p ) )
                     t = 10000
                 else:
                     t = t - 1
     while True:
         try:
-            clientSocket = getClientSocket( Host, Port )
-            wrn("Connected to %s at post %d."%( Host, Port ) )
+            clientSocket = []
+            for h in SendToHosts:
+                clientSocket.append( getClientSocket( h[0], h[1] ) )
+                wrn("Connected to %s at port %d."%( h[0], h[1] ) )
             while True:
-                clientSocket.sendall( clientThreadQueue.get( True, None ) )
+                try:
+                    thrownaway = clientThreadQueue.get( False )
+                except Queue.Empty:
+                    break
+            wrn("Dumped queue of anything left from before.")
+            while True:
+                o = clientThreadQueue.get( True, None )
+                for s in clientSocket:
+                    s.sendall( o )
         except Exception, detail:
             wrn( detail )
             wrn( "Caught an exception, re-connecting." )
-            try:
-                clientSocket.shutdown(socket.SHUT_RDWR)
-                clientSocket.close()
-            except:
-                pass
+            for s in clientSocket:
+                try:
+                    s.shutdown(socket.SHUT_RDWR)
+                    s.close()
+                except:
+                    pass
 
 # Queus is only shared, it has a size of at leat expand pts size, so if full
 # then, the send failed.  There is an implicit buffer in that if an item is
