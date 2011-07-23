@@ -187,6 +187,14 @@ The following functions are already defined:
 *   `glyphExpandToPts( nPoints, glyph )` expand the path in glyph to the number of points in nPoints and convert the format to triplets.
 
 
+Glyph Creator
+-------------
+
+This is a pyglet-based app that maybe is good enough to draw the glyphs.
+
+Basically you click and drag to draw illuminated lines and click and click elsewhere for blanked lines.
+
+After closing the window it will ask if you want to save it.
 
 
 Sequences
