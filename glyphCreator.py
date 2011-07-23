@@ -20,6 +20,16 @@ window = pyglet.window.Window(
 #window.push_handlers(pyglet.window.event.WindowEventLogger())
 
 # We only want to calculate once.
+gridNums = []
+def gridNumbers( x, y, num ):
+    gridNums.append( pyglet.text.Label(
+        str(num),
+        color=4*(155,),
+        font_name='Times New Roman',
+        font_size=9,
+        x=x, y=y,
+        anchor_x='center', anchor_y='center')
+    )
 gridDrawNpts = 0
 gridDrawPts = ()
 xmin = xpad
@@ -32,16 +42,20 @@ def line(x0,y0,x1,y1):
     gridDrawNpts = gridDrawNpts + 2
 for x in range( xmin, xmax, 8*PixPerCell ):
     line( x, ymin, x, ymax )
+    gridNumbers( x, ymin-6, (x-xmin)/PixPerCell )
 line( xmax, ymin, xmax, ymax )
 for y in range( ymin, ymax, 8*PixPerCell ):
     line( xmin, y, xmax, y )
+    gridNumbers( xmin-6, y, (y-ymin)/PixPerCell )
 line( xmin, ymax, xmax, ymax )
-del line, xmin, ymin, xmax, ymax
+del line, xmin, ymin, xmax, ymax, gridNumbers
 def gridDraw():
-    global gridDrawNpts, gridDrawPts
+    global gridDrawNpts, gridDrawPts, gridNums
     pyglet.gl.glColor4f( .3, .3, .3, .3 )
     pyglet.graphics.draw( gridDrawNpts, pyglet.gl.GL_LINES,
         ( 'v2i', gridDrawPts ) )
+    for n in gridNums:
+        n.draw()
 
 # Take in a cell:
 #   (x,y) such that 0 <= x < XGridSize, 0 <= y < YGridSize
