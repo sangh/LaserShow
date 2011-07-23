@@ -50,14 +50,14 @@ def glyphIsValid( g ):
 
 def glyphDump( g ):
     if not glyphIsValid( g ):
-        wrn("Glyph is not valid, not storing.")
-        return
+        raise NameError("Glyph is not valid, not storing.")
     fileName = os.path.join("glyphs", str(g['name']) + ".json")
     if( os.path.exists( fileName ) ):
-        wrn("It appears that this glyph exists, not storing.")
-        return
+        raise NameError("It appears that this glyph exists, not storing.")
+    gs = g.copy()
+    gs.pop('name')
     f = open( fileName, "w" )
-    json.dump(g, f)
+    json.dump(gs, f)
     f.close()
 
 def glyphLoad( name ):
@@ -75,7 +75,6 @@ def glyphLoad( name ):
         if isinstance( v, unicode ):
             v = v.encode('ascii')
         g[k.encode('ascii')] = v
-    # Above will encode the value of 'name'.
     p = []
     for pt in g['path']:
         if isinstance( pt, unicode ):
@@ -83,6 +82,7 @@ def glyphLoad( name ):
         else:
             p.append( pt )
     g['path'] = p
+    g['name'] = str(name)
     if glyphIsValid( g ):
         return g
     else:

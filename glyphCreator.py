@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from header import *
-
+from glyph import *
 sys.path.append("pyglet-1.1.4")
 import pyglet
 
@@ -99,7 +99,6 @@ def allSpotsDraw(dt):
                 spotDraw( x, y, spotsGrid[x][y] )
                 spotsGrid[x][y] = spotsGrid[x][y] - ( dt / SecPerTick / DelayGlow )
 
-pyglet.clock.schedule_interval(allSpotsDraw, SecPerTick)
 
 def calcLabel(px,py):
     cxy = pix2cell(px,py)
@@ -131,6 +130,22 @@ labelLitBlanked = pyglet.text.Label(
     x=window.width//2, y=window.height-xpad-30,
     anchor_x='center', anchor_y='top')
 
+labelSaving = pyglet.text.Label(
+    "Close window to enter name and save the glyph (or not).",
+    font_name='Times New Roman',
+    font_size=18,
+    x=window.width//2, y=xpad,
+    anchor_x='center', anchor_y='bottom')
+
+def lineDraw( color, c0, c1 ):
+    pyglet.gl.glColor4f( *color )
+    pyglet.graphics.draw( 2, pyglet.gl.GL_LINES,
+        ( 'v2i', cell2pix( *c0 ) + cell2pix( *c1 ) ) )
+def litLineDraw( c0, c1 ):
+    lineDraw( ( 1, 0, 1, 1 ), c0, c1 )
+def blankedLineDraw( c0, c1 ):
+    lineDraw( ( .5, .5, .5, .4 ), c0, c1 )
+
 # This is the glyph so far
 g = []
 def gDraw():
@@ -146,16 +161,14 @@ def gDraw():
                 lastCell = i
             else:
                 if lit:
-                    pyglet.gl.glColor4f( .5, .5, 1, .8 )
+                    litLineDraw( lastCell, i )
                 else:
-                    pyglet.gl.glColor4f( .5, .5, .5, .5 )
-                x0,y0 = cell2pix(lastCell[0],lastCell[1])
-                x1,y1 = cell2pix(i[0],i[1])
-                pyglet.graphics.draw( 2, pyglet.gl.GL_LINES,
-                    ( 'v2i', ( x0, y0, x1, y1 ) ) )
+                    blankedLineDraw( lastCell, i )
                 lastCell = i
 
 pressXY = None
+motionLine = None
+dragLine = None
 
 @window.event
 def on_mouse_press( px, py, button, modifiers ):
@@ -192,18 +205,30 @@ def on_mouse_release( px, py, button, modifiers ):
         g.append( pressXY )
         g.append( (x,y), )
         pressXY = ( x, y )
-        
 
 @window.event
 def on_mouse_motion(x, y, dx, dy):
+    global motionLine
+    global dragLine
+    dragLine = None
     calcLabel(x,y)
-    ret = pix2cell(x,y)
-    if ret is not None:
-        spotsGrid[ ret[0] ][ ret[1] ] = 1.0
+    try:
+        cx, cy = pix2cell( x, y ) # on sep line for TypeError checking
+        motionLine = (g[-1], ( cx, cy ))
+    except (IndexError, TypeError):
+        motionLine = None
 
 @window.event
 def on_mouse_drag( x, y, dx, dy, buttons, modifiers ):
+    global dragLine
+    global motionLine
+    motionLine = None
     calcLabel(x,y)
+    try:
+        cx, cy = pix2cell( x, y ) # on sep line for TypeError checking
+        dragLine = (g[-1], ( cx, cy ))
+    except (IndexError, TypeError):
+        dragLine = None
 
 @window.event
 def on_draw():
@@ -211,10 +236,14 @@ def on_draw():
     label.draw()
     labelGridSize.draw()
     labelLitBlanked.draw()
+    labelSaving.draw()
     gridDraw()
-    allSpotsDraw(0)
+    #allSpotsDraw(0)
     gDraw()
-    print len(g)
+    if motionLine is not None:
+        blankedLineDraw( *motionLine )
+    if dragLine is not None:
+        litLineDraw( *dragLine )
 
 @window.event
 def on_mouse_enter( x, y ):
@@ -225,7 +254,24 @@ def on_mouse_leave( x, y ):
     global pressXY
     calcLabel(-1,-1)
     pressXY = None
+    dragLine = None
+    motionLine = None
 
 
 
+#pyglet.clock.schedule_interval(allSpotsDraw, SecPerTick)
 pyglet.app.run()
+
+try:
+    import readline
+    i = raw_input("Enter a name to save the glyph (leave blank to abandon): ")
+    if "" == i:
+        i = None
+except EOFError:
+    i = None
+if i is not None:
+    gs = glyphCreate( str(i), g )
+    glyphDump( gs )
+    wrn("Saved glyph \"%s\"."%(gs['name']))
+else:
+    wrn("Not saving.")
