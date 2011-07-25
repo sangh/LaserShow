@@ -2,6 +2,7 @@
 
 from header import *
 import glyph as glyphModule
+import seq as seqModule
 
 
 def rawSendCmd( peri, cmd, arg ):
@@ -92,7 +93,27 @@ def shrinkXY( size ):
     return rawSendCmd( ord('X'), 112, int(255*size) )
 
 
-
+def seqPlay( s ):
+    "Play the given seq, won't return until finished."
+    if not seqModule.seqIsValid( s ):
+        raise NameError("Given sequence is not valid, not plying.")
+    import time
+    wrn("Starting to play seq \"%s\"."%(s[0]))
+    startTime = time.time()
+    for cmd in s[1:]:
+        sleepTime = startTime + cmd[0] - time.time()
+        if( 0 < sleepTime ):
+            time.sleep( sleepTime )
+        if 2 == len( cmd ):
+            rawSendCmd( *cmd[1] )
+        else:
+            # Is 3
+            if ord('X') == cmd[1][0]:
+                sendGlyphXY( cmd[1][1], glyphModule.glyphLoad( cmd[2] ) )
+            elif ord('x') == cmd[1][0]:
+                sendGlyphSlowXY( cmd[1][1], glyphModule.glyphLoad( cmd[2] ) )
+            else:
+                wrn('Not loading glyph \"%s\" as the peri \"%d\" is unknown.'%(cmd[2],cmd[1][0]))
 
 
 

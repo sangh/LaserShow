@@ -48,6 +48,17 @@ def glyphIsValid( g ):
         return False
     return True
 
+def glyphList():
+    "Return a list of glyphs saved already."
+    ls = os.listdir("glyphs")
+    ret = []
+    for l in ls:
+        if ".json" != l[-5:]:
+            wrn("%s is not named correctly."%(l))
+        else:
+            ret.append( l[:-5] )
+    return ret
+
 def glyphDump( g ):
     if not glyphIsValid( g ):
         raise NameError("Glyph is not valid, not storing.")

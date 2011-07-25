@@ -89,31 +89,39 @@ then:
 
     from comm import *
 
-At this point a socket should be open that could spit things to `netcat`.
-Now there could be multiple hosts defined in the header, if there are then
-each will be connected to (assuming there is `netcat` or something listening) and every command will go to all of them.  The
-actual sockets are held open in another thread that reads from a queue.
-that means that there is no practical way to know if a packet was sent (if
-knowing this is useful I can change it so that each send waits for the ack,
-but this'll throw off timing, see Socket Considerations below).
+At this point a socket should be open that could spit things to `netcat`.  Now
+there could be multiple hosts defined in the header, if there are then each
+will be connected to (assuming there is `netcat` or something listening) and
+every command will go to all of them.  The actual sockets are held open in
+another thread that reads from a queue.  that means that there is no practical
+way to know if a packet was sent (if knowing this is useful I can change it so
+that each send waits for the ack, but this'll throw off timing, see Socket
+Considerations below).
 
 If any of the connections fail, all will be closed, the queue dumped and all
 will then be re-connected to.
 
-In order to send a command you need to know the ID~s of things, to see what peripherals are known use the function `plist()`, or just look at
-the `header.py` file.
+In order to send a command you need to know the ID~s of things, to see what
+peripherals are known use the function `plist()`, or just look at the
+`header.py` file.
 
 So if you wanted to point stepper # 3 to target 0, do this:
 
     setTarget( 3, 0 )
 
-Which will use peripheral # 3 and index # 0, and already knows the ID of the setTarget command.  Really all of these convenience functions just call `rawSendCmd`.  You can always use this function directly by looking up the peripheral ID, command ID, and argument; there is no error checking, so really you can pass it any three bytes and it will send them, like this:
+Which will use peripheral # 3 and index # 0, and already knows the ID of the
+setTarget command.  Really all of these convenience functions just call
+`rawSendCmd`.  You can always use this function directly by looking up the
+peripheral ID, command ID, and argument; there is no error checking, so really
+you can pass it any three bytes and it will send them, like this:
 
     rawSendCmd( 255, 0, 134 )
 
 You should be able to build any functions you want off of this.
 
-As a more concrete example let's say you wanted to move the stepper motor with ID # 10 one tick clockwise, you would look up the ID of that command (my random numbers say it's 99), and then run this:
+As a more concrete example let's say you wanted to move the stepper motor with
+ID # 10 one tick clockwise, you would look up the ID of that command (my random
+numbers say it's 99), and then run this:
 
     rawSendCmd( 10, 99, 1 )
 
@@ -139,10 +147,11 @@ to index), the slow XY only `select glyph`
 and `load glyph`, and the fast XY takes `select glyph`, `load glyph`, `rotate`,
 and `shrink`.  (Is this correct?)
 
-Byte 3 is an argument to that command it is always sent, even if that command wants to ignore it. For go-to-index it's the index ID (see
-`header.py`), for rotate it's an angle it's any valid byte, for shrink an amount, for
-select glyph it's a memory slot number (in hardware), for load it's a slot
-number (in hardware) to write the new glyph into.
+Byte 3 is an argument to that command it is always sent, even if that command
+wants to ignore it. For go-to-index it's the index ID (see `header.py`), for
+rotate it's an angle it's any valid byte, for shrink an amount, for select
+glyph it's a memory slot number (in hardware), for load it's a slot number (in
+hardware) to write the new glyph into.
 
 The only deviation from the ( peripheral id, command, argument ) set is when a
 `load glyph into slot` command is given, then the next `XYExpantPts`, a
@@ -150,9 +159,10 @@ constant in `header.py` (which is exactly how many points each and every glyph
 has), are 3-bytes sets of XY+flag points.  There is no terminator, so the
 read-socket timeout function should clear out the buffer.
 
-Each point of a glyph is 3-bytes.  Byte 1 is the X, with 0 on
-the right, 255 on the left.  Byte 2 is Y, with 0 on the bottom
-and 255 on the top.  Byte 3 is either 0 or 1, 0 for normal, and 1 for blanked, we have another 7 bits for other flags if we want them.
+Each point of a glyph is 3-bytes.  Byte 1 is the X, with 0 on the right, 255 on
+the left.  Byte 2 is Y, with 0 on the bottom and 255 on the top.  Byte 3 is
+either 0 or 1, 0 for normal, and 1 for blanked, we have another 7 bits for
+other flags if we want them.
 
 
 
@@ -160,9 +170,20 @@ Socket Considerations
 ---------------------
 
 
-The set-up right now is another thread holds all the sockets in blocking mode (so errors generally are not reported until the next packet is sent), and sends every command to all of them one at a time.  There is a queue between it and the control thread (the UI or whatever).  The question is, is this what we want?  (Other alternatives are making each call wait until it knows it was sent, or having a timeout, or maybe not dumping the queue every time, etc.)  This isn't important to my UI work, but I wanted to write it down anyway.
+The set-up right now is another thread holds all the sockets in blocking mode
+(so errors generally are not reported until the next packet is sent), and sends
+every command to all of them one at a time.  There is a queue between it and
+the control thread (the UI or whatever).  The question is, is this what we
+want?  (Other alternatives are making each call wait until it knows it was
+sent, or having a timeout, or maybe not dumping the queue every time, etc.)
+This isn't important to my UI work, but I wanted to write it down anyway.
 
-Something that might be relevant is the multiple address thing.  If we want particular peripherals tied directly to a given address (so they only get commands sent to it and not commands sent to other peripherals) then I need to change this as soon as possible (should they all break at the same time or have separate threads so one can keep going if another one fails, how (or do we) report errors back to the UI?).  You have any thought?
+Something that might be relevant is the multiple address thing.  If we want
+particular peripherals tied directly to a given address (so they only get
+commands sent to it and not commands sent to other peripherals) then I need to
+change this as soon as possible (should they all break at the same time or have
+separate threads so one can keep going if another one fails, how (or do we)
+report errors back to the UI?).  You have any thought?
 
 
 
@@ -170,21 +191,31 @@ Something that might be relevant is the multiple address thing.  If we want part
 Glyphs
 ------
 
-There are two uses for glyphs, one for the fast XY to draw a still frame (to which rotation and shrinkage can be applied in the HW), and one for the slow XY to move it around the room.  To the SW both are indistinguishable except for how many points they get expanded out to when loaded into a slot, and can be used interchangeably.  The only constants that are stored (and checked on load) is the grid size (currently set to 256 x 256).
+There are two uses for glyphs, one for the fast XY to draw a still frame (to
+which rotation and shrinkage can be applied in the HW), and one for the slow XY
+to move it around the room.  To the SW both are indistinguishable except for
+how many points they get expanded out to when loaded into a slot, and can be
+used interchangeably.  The only constants that are stored (and checked on load)
+is the grid size (currently set to 256 x 256).
 
-In memory a glyph is just a dictionary that defines a name, a path, and the grid-size.  A path is a set of points and blanking instructions.  Take a look at the stored ones in the `glyphs/` directory.
+In memory a glyph is just a dictionary that defines a name, a path, and the
+grid-size.  A path is a set of points and blanking instructions.  Take a look
+at the stored ones in the `glyphs/` directory.
 
 The following functions are already defined:
 
-*   `pointIsValid( pt )` checks if a point is within the grid or a "on" or "off" signal.
+*   `pointIsValid( pt )` checks if a point is within the grid or a "on" or
+    "off" signal.
 *   `pathIsValid( path )`
 *   `glyphIsValid( g )`
 *   `glyphDump( g )` stores the given glyph to disk in the `glyphs/` directory.
 *   `glyphLoad( name )` loads a glyph with the given name from disk.
-*   `glyphCreate( name, path )` create a glyph with the given path and grid-size from header.
+*   `glyphCreate( name, path )` create a glyph with the given path and
+    grid-size from header.
 *   `distanceEuclidean( lpt, pt )`
 *   `interpolateEvenSpacedPtsOnALine( nPts, pt1, pt2 )`
-*   `glyphExpandToPts( nPoints, glyph )` expand the path in glyph to the number of points in nPoints and convert the format to triplets.
+*   `glyphExpandToPts( nPoints, glyph )` expand the path in glyph to the number
+    of points in nPoints and convert the format to triplets.
 
 
 Glyph Creator
@@ -192,7 +223,8 @@ Glyph Creator
 
 This is a pyglet-based app that maybe is good enough to draw the glyphs.
 
-Basically you click and drag to draw illuminated lines and click and click elsewhere for blanked lines.
+Basically you click and drag to draw illuminated lines and click and click
+elsewhere for blanked lines.
 
 After closing the window it will ask if you want to save it.
 
@@ -200,9 +232,11 @@ After closing the window it will ask if you want to save it.
 Sequences
 ---------
 
-This doesn't exist yet but the idea would be to store a list of commands (with T+seconds) that could be played back.  Everything this could do can already be done by typing the commands directly, but like glyphs it should be possible to dump/load pre-written ones and then have a thread that sends them at the right time.
-
-
+The ability to store a series of time based commands and play them back is what
+this does.  Each has a name can can be saved (Dumped) and loaded from disk.  The
+play function will block until all commands are sent, that is it will block for
+approximately `seq[-1][0]` seconds.  Can be used to play sync~ed with something
+else, like music.
 
 
 
