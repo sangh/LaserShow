@@ -87,24 +87,19 @@ Commands = {
     5:          "Set current tick to index `arg'",
 }
 # List is the accepted commands from above.
+# One thread/queue for each _unique_ host/port.
 Peripherals = {
+    ord('X'):   ("XY, the fast one.", ("localhost",5555) ),
+    ord('x'):   ("Slow XY", ("localhost",5555) ),
+    10:         ("One stepper motor description.", ("localhost",5555) ),
+    11:         ("Stepper 2!", ("localhost",5555) ),
+    99:         ("3rd Stepper", ("localhost",5555) ),
+}
 
-    ord('X'):   ("XY, the fast one.", {} ),  # No index (target) descriptions.
-    ord('x'):   ("Slow XY", {} ),  # No index (target) descriptions.
-    10:         ("One stepper motor description.", {
-            0:      "0th target is the XY~s.",
-            1:      "Target one is ...",
-            2:      "Target the second is undescribed.",
-        } ),
-    11:         ("Stepper 2!", {
-            0:      "XY",
-            1:      "Unknown 2nd target.",
-            8:      "Blank target, like it's off.",
-        } ),
-    99:         ("3rd Stepper", {
-            3:      "XY",
-            8:      "Another index/target",
-        } ),
+Targets = {
+    0:  "The diffGrat, slowXY, XY",
+    1:  "Target one is ...",
+    2:  "Target the second is undescribed.",
 }
 
 def peripheralCommandIsValid( peri, cmd ):

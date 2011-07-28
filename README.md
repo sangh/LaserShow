@@ -11,7 +11,7 @@ Definitions
     that is set to a number from 0 to 255 inclusive.  This can sometimes look a
     little weird, for instance if you wanted to use the value that is the ASCII
     letter 'A' you could write it as `ord('A')` and then latter refer to it as
-    `65` or `0x41`.  All ID~s are bytes.
+    `65` or `0x41`.  All ID~s are bytes.  This is shown in the header.py.
 *   *Peripheral* is HW that can take commands, right now this means
     stepper motors, the fast XY, and the slow XY.  (Does the diffraction
     grating count?)  Each distinct peripheral in the world is given a unique
@@ -40,12 +40,11 @@ Definitions
     they are not visible from SW, but usually indexes will tell one to point to
     a target.
 *   *Index* is a pre-defined place a stepper motor can go defined
-    by an ID (a byte) listed in the Peripheral dictionary.  Each peripheral's
-    set of indexes is only unique with its self, that is it is possible for two
-    distinct peripherals to share some index ID~s that point to different
-    targets.  I would be OK making the indexes universally-unique, that is a
-    particular index will point to a particular target on all stepper motors.
-    Which would you prefer?
+    by an ID (a byte) listed in the Targets dictionary.  The list of targets is
+    shared across all peripherals, that is if, say, '0' points to the XY, then
+    that index is what all peripherals accept as the index for the XY (assuming
+    that they are physically capable of it).  There is no real error checking
+    to know if a given peripherals can point to the sent index/target.
 
 
 Header (.py)
@@ -55,24 +54,21 @@ These are the hard-coded things that _every_ class sees.  It is a set of static
 definitions so that it can be imported multiple times (so the rest of the stuff
 can just include it without checking anything else).
 
-The big thing in here are the dicts of peripherals and commands.  These
+The big thing in here are the dicts of peripherals, commands, and targets.  These
 are currently set to random numbers (that are the actual bytes sent to
 the HW), so feel free to change them to whatever the HW expects.  There are a few
 assumptions I'm making, however:
 
 *   Each dictionary key must be a byte, or stuff will break.
-*   I'm assuming the list of Commands (and Peripherals) is universal, meaning
-    that any command could (via programmer error) be sent to any peripheral and
-    it should be smart enough to ignore it if it can't do it or it doesn't make
-    sense for that peripheral.
-*   Peripherals; each one is listed with it's targets in the dict.  When
-    the configuration changes it should be easy to modify the dict.  The
-    thing is that there could be multiple hosts that the SW sends commands
-    to, but everything will go to all of them, so if a peripheral gets a command
-    for another one it should ignore it.  This shouldn't be hard in most cases
-    as the first byte of most triplets is the peripheral ID, but when a glyph
-    is being sent they need to ignore all the bytes sent for it, which means
-    they have to timeout in an intelligent way if comms fail.
+*   I'm assuming the list of `Commands`, `Peripherals`, and `Targets` is
+    universal, meaning that any command could (via programmer error) be sent to
+    any peripheral and it should be smart enough to ignore it if it can't do it
+    or it doesn't make sense for that peripheral.
+*   When the configuration changes it should be easy to modify the dicts.  The
+    host and port is determined by the peripheral, as the first byte of most
+    triplets is the peripheral ID, but when a glyph is being sent they need to
+    ignore all the bytes sent for it (I mean not treat them as commands), which
+    means they have to timeout in an intelligent way if comms fail.
 
 
 
@@ -80,7 +76,7 @@ The `comm.py` or Communications Interface
 ----------------------------------------
 
 This class takes care of talking to the hardware.  You can try it out by
-listening with `netcat`, like this:
+listening with `netcat`, like this (with whatever is defined in header.py):
 
     nc -vlp 5555 | xxd -c3 -g1
 
@@ -91,15 +87,15 @@ then:
 
 At this point a socket should be open that could spit things to `netcat`.  Now
 there could be multiple hosts defined in the header, if there are then each
-will be connected to (assuming there is `netcat` or something listening) and
-every command will go to all of them.  The actual sockets are held open in
-another thread that reads from a queue.  that means that there is no practical
-way to know if a packet was sent (if knowing this is useful I can change it so
-that each send waits for the ack, but this'll throw off timing, see Socket
-Considerations below).
+will be connected to (assuming there is `netcat` or something listening).  The
+actual sockets are held open in another thread (one for each unique host/port)
+that reads from a queue.  that means that there is no practical way to know if
+a packet was sent (if knowing this is useful I can change it so that each send
+waits for the ack, but this'll throw off timing, see Socket Considerations
+below).
 
-If any of the connections fail, all will be closed, the queue dumped and all
-will then be re-connected to.
+If any of the connections fail, it (but not the others) will be closed, the
+queue dumped and then be re-connected to.
 
 In order to send a command you need to know the ID~s of things, to see what
 peripherals are known use the function `plist()`, or just look at the
@@ -110,26 +106,28 @@ So if you wanted to point stepper # 3 to target 0, do this:
     setTarget( 3, 0 )
 
 Which will use peripheral # 3 and index # 0, and already knows the ID of the
-setTarget command.  Really all of these convenience functions just call
-`rawSendCmd`.  You can always use this function directly by looking up the
-peripheral ID, command ID, and argument; there is no error checking, so really
-you can pass it any three bytes and it will send them, like this:
+setTarget command (if it changes in header.py, then it must also be changed
+here).  Really all of these convenience functions just call `sendCmd`.  You can
+always use this function directly by looking up the peripheral ID, command ID,
+and argument, like this:
 
-    rawSendCmd( 255, 0, 134 )
+    sendCmd( 255, 0, 134 )
 
-You should be able to build any functions you want off of this.
+You should be able to build any functions you want off of this.  If you need to
+send an arbitrary set of three bytes you can use `rawSend(...)` instead, but
+you need a host/port that already has an open socket.
 
 As a more concrete example let's say you wanted to move the stepper motor with
 ID # 10 one tick clockwise, you would look up the ID of that command (my random
 numbers say it's 99), and then run this:
 
-    rawSendCmd( 10, 99, 1 )
+    sendCmd( 10, 99, 1 )
 
 
 A More Complete Description of the Protocol
 -------------------------------------------
 
-Every command sent to the hardware is sent in 3 byte chunks.  Which means you
+Every command sent to the hardware is sent in 3 byte chunks.  Which means the HW
 can always read 3 bytes (with a really really short timeout in case something
 breaks while reading with a buffer clear) and then do the processing on those
 three at a time.
@@ -140,12 +138,12 @@ is the argument to that command.
 For peripheral ID~s, see `header.py`.  One ID designates the fast XY, another
 the slow one, and the rest are different stepper motors.
 
-Byte number 2 will be the dict key for one of the commands in `Commands`.  The
-selected peripheral (the ID in byte number 1) has to accept this command.
+Byte number 2 will be the dict key for one of the command in `Commands`.  The
+selected peripheral (the ID in byte number 1) chooses the host/port.
 Stepper motors take the `target` command (and the move arg ticks, and set tick
 to index), the slow XY only `select glyph`
 and `load glyph`, and the fast XY takes `select glyph`, `load glyph`, `rotate`,
-and `shrink`.  (Is this correct?)
+and `shrink`.  (Is this correct?  There's no checking, but anyway.)
 
 Byte 3 is an argument to that command it is always sent, even if that command
 wants to ignore it. For go-to-index it's the index ID (see `header.py`), for
@@ -157,7 +155,8 @@ The only deviation from the ( peripheral id, command, argument ) set is when a
 `load glyph into slot` command is given, then the next `XYExpantPts`, a
 constant in `header.py` (which is exactly how many points each and every glyph
 has), are 3-bytes sets of XY+flag points.  There is no terminator, so the
-read-socket timeout function should clear out the buffer.
+read-socket timeout function should clear out the buffer.  (Is this the kind
+of protocol you want?)
 
 Each point of a glyph is 3-bytes.  Byte 1 is the X, with 0 on the right, 255 on
 the left.  Byte 2 is Y, with 0 on the bottom and 255 on the top.  Byte 3 is
@@ -171,20 +170,13 @@ Socket Considerations
 
 
 The set-up right now is another thread holds all the sockets in blocking mode
-(so errors generally are not reported until the next packet is sent), and sends
-every command to all of them one at a time.  There is a queue between it and
+(so errors generally are not reported until the next packet is sent).
+There is a queue between it and
 the control thread (the UI or whatever).  The question is, is this what we
 want?  (Other alternatives are making each call wait until it knows it was
 sent, or having a timeout, or maybe not dumping the queue every time, etc.)
-This isn't important to my UI work, but I wanted to write it down anyway.
-
-Something that might be relevant is the multiple address thing.  If we want
-particular peripherals tied directly to a given address (so they only get
-commands sent to it and not commands sent to other peripherals) then I need to
-change this as soon as possible (should they all break at the same time or have
-separate threads so one can keep going if another one fails, how (or do we)
-report errors back to the UI?).  You have any thought?
-
+This isn't important to my UI work, but I wanted to write it down as an open
+question.
 
 
 
