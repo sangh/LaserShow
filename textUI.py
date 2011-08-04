@@ -99,8 +99,7 @@ def selPeriID():
         wrn("Not a valid choice, going back to menu.")
         return None
 
-# These are the commands to run.
-def cmdSelTarget( lc = None ):
+def selTargetHelper( lasercmd, lc ):
     if lc is None:
         p = selPeriID()
         if p is None:
@@ -118,8 +117,11 @@ def cmdSelTarget( lc = None ):
             return None
         else:
             lc = ( p, ti )
-    setTarget( *lc )
+    sendCmd( lc[0], lasercmd, lc[1] )
     return lc
+
+def cmdSelTarget( lc = None ):
+    return selTargetHelper( ord('T'), lc )
 
 def cmdSetRotation( lc = None ):
     if lc is None:
@@ -146,6 +148,26 @@ def cmdShrink( lc = None ):
             return None
     shrinkXY( lc )
     return lc
+
+def cmdGlyphSelect( lc = None ):
+    try:
+        if lc is None:
+            lc = int(raw_input("Enter a decimal byte for the slot to select, followed by enter: "))
+            chr(lc)
+        selectGlyphXY( lc )
+    except ValueError:
+        wrn("Not a decimal byte.")
+        return None
+
+def cmdGlyphSlowSelect( lc = None ):
+    try:
+        if lc is None:
+            lc = int(raw_input("Enter a decimal byte for the slot to select, followed by enter: "))
+            chr(lc)
+        selectGlyphSlowXY( lc )
+    except ValueError:
+        wrn("Not a decimal byte.")
+        return None
 
 def glyphSendHelper( fn, lc = None ):
     "Select and send a glyph"
@@ -257,20 +279,47 @@ def cmdStartRec( lc = None ):
     return lc
 
 def cmdTickClock( lc = None ):
-    wrn("Not implemented yet.")
-    return lc
+    try:
+        if lc is None:
+            p = selPeriID()
+            if p is None:
+                return None
+            tic = int(eval(raw_input("Enter num ticks, followed by enter: ")))
+            chr(tic)
+            lc = ( p, 99, tic )
+        sendCmd( *lc )
+        return lc
+    except:
+        wrn(sys.exc_info())
+        wrn("Could not tic clock, going back to menu.")
+        return None
 
 def cmdTickCounter( lc = None ):
-    wrn("Not implemented yet.")
-    return lc
+    try:
+        if lc is None:
+            p = selPeriID()
+            if p is None:
+                return None
+            tic = int(eval(raw_input("Enter num ticks, followed by enter: ")))
+            chr(tic)
+            lc = ( p, 12, tic )
+        sendCmd( *lc )
+        return lc
+    except:
+        wrn(sys.exc_info())
+        wrn("Could not tic clock, going back to menu.")
+        return None
 
 def cmdTickIndex( lc = None ):
-    wrn("Not implemented yet.")
-    return lc
+    return selTargetHelper( 5, lc )
 
 def cmdOpenGlyphCreator( lc = None ):
-    wrn("Not implemented yet.")
-    return lc
+    try:
+        execfile("glyphCreator.py")
+    except:
+        wrn(sys.exc_info())
+        wrn("Could not open it, going back to menu.")
+    return None
 
 def cmdStopRec( lc = None ):
     wrn("Not implemented yet.")
@@ -294,6 +343,8 @@ cmdsBoth = (
     ('m', 'Move peripheral to target index', cmdSelTarget),
     ('o', 'Set XY rotation', cmdSetRotation),
     ('h', 'Shrink current glyph', cmdShrink),
+    ('d', 'Display glyph in a slot on the XY', cmdGlyphSelect),
+    ('D', 'Display glyph in a slot on the Slow XY', cmdGlyphSlowSelect),
     ('g', 'Send a glyph to a slot on the XY', cmdGlyphSend),
     ('G', 'Send a glyph to a slot on the slow XY', cmdGlyphSlowSend),
     ('b', 'Send 3 arbitrary bytes', cmdSendBytes),
@@ -321,6 +372,7 @@ for i in cmdsBoth + cmdsNorm + cmdsRec:
         bye(2,'Char "%s" is reused.'%(str(i[0])))
     tmp.append( i[0] )
 del tmp
+recSeq = []  # seq to rec
 
 # And finally loop until exit.
 while True:
@@ -335,9 +387,20 @@ while True:
     except StopIteration:
         print "Cmd '%s' not found."%(str(c))
     else:
-        print "Running '%s'..."%(cmdToRun[1])
-        if ' ' == cmdToRun[0]:  # If repeat.
-            cmdLastArg = cmdToRun[2]( lc = cmdLastArg )
+        if 's' == cmdToRun[0]:  # If start rec
+            cmdLast = (cmd for cmd in cmdsBoth if '0' == cmd[0]).next()
+            cmdLastArg = None
+            cmdState = cmdsRec
+            print "Starting recording not yet implemented."
+        elif 'S' == cmdToRun[0]:  # If stop rec
+            cmdLast = (cmd for cmd in cmdsBoth if '0' == cmd[0]).next()
+            cmdLastArg = None
+            cmdState = cmdsRec
+            print "Stop rec not implemented yet."
         else:
-            cmdLastArg = cmdToRun[2]( lc = None )
-            cmdLast = cmdToRun
+            print "Running '%s'..."%(cmdToRun[1])
+            if ' ' == cmdToRun[0]:  # If repeat.
+                cmdLastArg = cmdToRun[2]( lc = cmdLastArg )
+            else:
+                cmdLastArg = cmdToRun[2]( lc = None )
+                cmdLast = cmdToRun

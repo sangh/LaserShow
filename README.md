@@ -231,6 +231,10 @@ approximately `seq[-1][0]` seconds.  Can be used to play sync~ed with something
 else, like music.
 
 
+TextUI
+------
+
+This is what you should probably use, more desc later.
 
 
 
