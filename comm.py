@@ -8,9 +8,9 @@ import seq as seqModule
 # You almost certainly want to be using ons of the fn below
 # instead of this function.
 def rawSend( hostPortKey, byte1, byte2, byte3 ):
-    "Send these three bytes with no checking, that is"
-    "of course apart from being a real hostPortKey and"
-    "the bytes are ints between 0 and 255."
+    """Send these three bytes with no checking, that is
+    of course apart from being a real hostPortKey and
+    the bytes are ints between 0 and 255."""
     try:
         clientThreadSend(   hostPortKey,
                             chr( byte1 ) + chr( byte2 ) + chr( byte3 ) )
@@ -22,43 +22,43 @@ def rawSend( hostPortKey, byte1, byte2, byte3 ):
             "( %s, %s, %s )."%( str(byte1), str(byte2), str(byte3) ) )
 
 def sendCmd( peri, cmd, arg ):
-    "Send a command to peri with arg.  Everything is 3-byte packets."
-    "Minimal error checking is done."
+    """Send a command to peri with arg.  Everything is 3-byte packets.
+    Minimal error checking is done."""
     try:
         rawSend( Peripherals[peri][1], peri, cmd, arg )
     except KeyError:
         raise KeyError("Peri is invalid: '%s'."%(str(peri)))
 
 def setTarget( peri, target ):
-    "Send command to set a stepper motor to ths given target number."
-    "See header.py for what the numbers are for, and the readme for examples."
+    """Send command to set a stepper motor to ths given target number.
+    See header.py for what the numbers are for, and the readme for examples."""
     if target in Targets.keys():
         sendCmd( peri, ord('T'), target )
     else:
         raise NameError("Invaild target (%s)."%(str(target)))
 
 def selectGlyphXY( slot ):
-    "Make the fast XY display the glyph in `slot'."
+    """Make the fast XY display the glyph in `slot'."""
     if slot >= NumSlotsXY:
         raise NameError("Slot \"%d\" is invalid for the fast XY."%( slot ) )
     sendCmd( ord('X'), 3, slot )
 
 def selectGlyphSlowXY( slot ):
-    "Make the slow XY display the glyph in `slot'."
+    """Make the slow XY display the glyph in `slot'."""
     if slot >= NumSlotsSlowXY:
         raise NameError("Slot \"%d\" is invalid for the slow XY."%( slot ) )
     sendCmd( ord('x'), 3, slot )
 
 # Use sendGlyphXY or sendGlyphSlowXY instead of this fn.
 def sendGlyphToPeri( peri, slot, glyph, expandToThisManyPoints ):
-    "Use sendGlyphXY or sendGlyphSlowXY instead of this fn."
+    """Use sendGlyphXY or sendGlyphSlowXY instead of this fn."""
     exGlyph = glyphModule.glyphExpandToPts( expandToThisManyPoints, glyph )
     sendCmd( peri, 193, slot )
     for p in exGlyph:
         rawSend( Peripherals[peri][1], p[0], p[1], p[2] )
 
 def sendGlyphXY( slot, glyph ):
-    "Send glyph to the XY."
+    """Send glyph to the XY."""
     if slot >= NumSlotsXY:
         raise NameError("Slot \"%d\" is invalid for the fast XY."%( slot ) )
     sendGlyphToPeri( ord('X'), slot, glyph, ExpandPtsXY )
@@ -66,7 +66,7 @@ def sendGlyphXY( slot, glyph ):
 
 
 def sendGlyphSlowXY( slot, glyph ):
-    "Send glyph to the slow XY."
+    """Send glyph to the slow XY."""
     if slot >= NumSlotsSlowXY:
         raise NameError("Slot \"%d\" is invalid for the slow XY."%( slot ) )
     sendGlyphToPeri( ord('x'), slot, glyph, ExpandPtsSlowXY )
@@ -74,23 +74,23 @@ def sendGlyphSlowXY( slot, glyph ):
 
 # Really just an example for the rest of the commands.
 def rotateXY( angle ):
-    "Tell fast XY to move to angle:"
-    "0.0 is no change (upright),"
-    "0.25 is 90 degrees on the right (clockwise) side,"
-    "0.5 is upside-down,"
-    "0.74 is 90 degreer on the left side."
+    """Tell fast XY to move to angle:
+    0.0 is normal (upright),
+    0.25 is 90 degrees on the right (clockwise) side,
+    0.5 is upside-down,
+    0.74 is 90 degrees on the left side."""
     sendCmd( ord('X'), ord('R'), int(255*angle) )
 
 def shrinkXY( size ):
-    "Tell fast XY to shrink to size: "
-    "0.0 is shrink to nothing,"
-    "1.0 is keep it full size,"
-    "0.5 is make it half size."
+    """Tell fast XY to shrink to size: 
+    0.0 is shrink to nothing,
+    1.0 is keep it full size,
+    0.5 is make it half size."""
     sendCmd( ord('X'), 112, int(255*size) )
 
 
 def seqPlay( s ):
-    "Play the given seq, won't return until finished."
+    """Play the given seq, won't return until finished."""
     if not seqModule.seqIsValid( s ):
         raise NameError("Given sequence is not valid, not plying.")
     import time
@@ -163,7 +163,7 @@ def clientThreadRun( hostPort, clientQueue ):
 clientThreadQueues = {}
 for p in Peripherals:
     clientThreadQueues[ Peripherals[p][1] ] = None
-QueueMaxSize = max( ExpandPtsSlowXY, ExpandPtsXY )
+QueueMaxSize = 2 * max( ExpandPtsSlowXY, ExpandPtsXY )
 clientThreads = {}
 for p in clientThreadQueues:
     clientThreadQueues[p] = Queue.Queue( maxsize = QueueMaxSize )

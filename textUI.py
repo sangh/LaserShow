@@ -85,18 +85,135 @@ def i2c( i ):
     raise KeyError("No i 2 c mapping.")
 
 
+def selPeriID():
+    print "Peripherals: "
+    pindexes = Peripherals.keys()
+    for i in range( len( pindexes ) ):
+        print "  %s: %s"%(i2c(i),Peripherals[pindexes[i]][0])
+    print "Choose a peripheral by entering a char: ",
+    c = getch()
+    print c
+    try:
+        return pindexes[ c2i[ c ] ]
+    except IndexError:
+        wrn("Not a valid choice, going back to menu.")
+        return None
+
 # These are the commands to run.
-def cmdSelTarget( lc = None ): pass
-def cmdSetRotation( lc = None ): pass
-def cmdShrink( lc = None ): pass
-def cmdGlyphSend( lc = None ): pass
-def cmdSendBytes( lc = None ): pass
+def cmdSelTarget( lc = None ):
+    if lc is None:
+        p = selPeriID()
+        if p is None:
+            return None
+        tindexes = Targets.keys()
+        for i in range( len( tindexes ) ):
+            print "  %s: %s"%(i2c(i),Targets[tindexes[i]])
+        print "Choose a target index by entering a char: ",
+        c = getch()
+        print c
+        try:
+            ti = tindexes[ c2i[ c ] ]
+        except IndexError:
+            wrn("Not a valid choice, going back to menu.")
+            return None
+        else:
+            lc = ( p, ti )
+    setTarget( *lc )
+    return lc
+
+def cmdSetRotation( lc = None ):
+    if lc is None:
+        print( rotateXY.__doc__ )
+        try:
+            lc = float(raw_input("Enter a float in the range [0,1), followed by enter: "))
+            if lc < 0  or lc >= 1:
+                raise ValueError
+        except ValueError:
+            wrn("Not a float greater than or equal to 0 and less than 1.")
+            return None
+    rotateXY( lc )
+    return lc
+
+def cmdShrink( lc = None ):
+    if lc is None:
+        print( shrinkXY.__doc__ )
+        try:
+            lc = float(raw_input("Enter a float in the range [0,1], followed by enter: "))
+            if lc < 0  or lc > 1:
+                raise ValueError
+        except ValueError:
+            wrn("Not a float greater than or equal to 0 and less than or equal to 1.")
+            return None
+    shrinkXY( lc )
+    return lc
+
+def glyphSendHelper( fn, lc = None ):
+    "Select and send a glyph"
+    if lc is None:
+        ss = glyphList()
+        if len(ss) > nIndexes:
+            wrn("Truncating num glyph to %d."%(nIndexes))
+            ss = ss[:nIndexes]
+        print "Glyphs: "
+        for i in range( len( ss ) ):
+            print "  %s: %s"%(i2c(i),ss[i])
+        print "Enter a char to select a glyph: ",
+        c = getch()
+        print c
+        try:
+            glyphToSend = glyphLoad( ss[ c2i[ c ] ] )
+        except IndexError:
+            wrn("Not a valid choice, going back to menu.")
+            return None
+        except:
+            wrn(sys.exc_info())
+            wrn("Could not load glyph,  going back to menu.")
+            return None
+        try:
+            slt = int(raw_input("Enter a decimal byte for the slot to load into, followed by enter: "))
+            chr(slt)
+        except ValueError:
+            wrn("Not a decimal byte.")
+            return None
+        lc = ( slt, glyphToSend )
+    try:
+        fn( *lc )
+    except:
+        wrn(sys.exc_info())
+        wrn("Could not send glyph, going back to menu.")
+        return None
+    return lc
+
+def cmdGlyphSend( lc = None ):
+    return glyphSendHelper( sendGlyphXY, lc )
+
+def cmdGlyphSlowSend( lc = None ):
+    return glyphSendHelper( sendGlyphSlowXY, lc )
+
+def cmdSendBytes( lc = None ):
+    try:
+        if lc is None:
+            p = selPeriID()
+            if p is None:
+                return None
+            ret = eval(raw_input("Enter 3 decimal bytes separated by commans, followed by enter: "))
+            if len(ret) != 3:
+                raise ValueError
+            lc = ( Peripherals[p][1], int(ret[0]), int(ret[1]), int(ret[2]) )
+        rawSend( *lc )
+        return lc
+    except:
+        wrn(sys.exc_info())
+        wrn("Could not send raw cmd, going back to menu.")
+        return None
 
 def cmdPass( lc = None ):
+    wrn("Doing nothing.")
     return None
 
 def cmdRepeat( lc = None ):
     global cmdLast
+    print "-->", cmdLast[1], "with arguments", lc
     return cmdLast[2]( lc = lc )
 
 def cmdQuit( lc = None ):
@@ -112,9 +229,9 @@ def cmdPlaySeq( lc = None ):
         print "Sequences: "
         for i in range( len( ss ) ):
             print "  %s: %s"%(i2c(i),ss[i])
-        print "Enter a char to select sequences: ",
+        print "Enter a char to select a sequence: ",
         c = getch()
-        print
+        print c
         try:
             seqToPlay = seqLoad( ss[ c2i[ c ] ] )
         except IndexError:
@@ -135,12 +252,30 @@ def cmdPlaySeq( lc = None ):
         wrn("Could not play seq, going back to menu.")
         return None
 
-def cmdStartRec( lc = None ): pass
-def cmdTickClock( lc = None ): pass
-def cmdTickCounter( lc = None ): pass
-def cmdTickIndex( lc = None ): pass
-def cmdOpenGlyphCreator( lc = None ): pass
-def cmdStopRec( lc = None ): pass
+def cmdStartRec( lc = None ):
+    wrn("Not implemented yet.")
+    return lc
+
+def cmdTickClock( lc = None ):
+    wrn("Not implemented yet.")
+    return lc
+
+def cmdTickCounter( lc = None ):
+    wrn("Not implemented yet.")
+    return lc
+
+def cmdTickIndex( lc = None ):
+    wrn("Not implemented yet.")
+    return lc
+
+def cmdOpenGlyphCreator( lc = None ):
+    wrn("Not implemented yet.")
+    return lc
+
+def cmdStopRec( lc = None ):
+    wrn("Not implemented yet.")
+    return lc
+
 
 
 
@@ -159,7 +294,8 @@ cmdsBoth = (
     ('m', 'Move peripheral to target index', cmdSelTarget),
     ('o', 'Set XY rotation', cmdSetRotation),
     ('h', 'Shrink current glyph', cmdShrink),
-    ('g', 'Send a glyph to a slot', cmdGlyphSend),
+    ('g', 'Send a glyph to a slot on the XY', cmdGlyphSend),
+    ('G', 'Send a glyph to a slot on the slow XY', cmdGlyphSlowSend),
     ('b', 'Send 3 arbitrary bytes', cmdSendBytes),
     ('0', 'Do nothing', cmdPass),
     (' ', '(spacebar) repeat last command', cmdRepeat),
@@ -193,12 +329,15 @@ while True:
         print "  Press '%s' to '%s'."%( str(cmd[0]), cmd[1] )
     print "? ",
     c = getch()
-    print
+    print c
     try:
         cmdToRun = (cmd for cmd in (cmdsBoth + cmdState) if c == cmd[0]).next()
     except StopIteration:
         print "Cmd '%s' not found."%(str(c))
-    print "Running '%s'..."%(cmdToRun[1])
-    cmdLastArg = cmdToRun[2]( lc = cmdLastArg )
-    if ' ' != cmdToRun[0]:  # If not repeat.
-        cmdLast = cmdToRun
+    else:
+        print "Running '%s'..."%(cmdToRun[1])
+        if ' ' == cmdToRun[0]:  # If repeat.
+            cmdLastArg = cmdToRun[2]( lc = cmdLastArg )
+        else:
+            cmdLastArg = cmdToRun[2]( lc = None )
+            cmdLast = cmdToRun
