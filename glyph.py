@@ -50,7 +50,7 @@ def glyphIsValid( g ):
 
 def glyphList():
     "Return a list of glyphs saved already."
-    ls = os.listdir("glyphs")
+    ls = sorted(os.listdir("glyphs"))
     ret = []
     for l in ls:
         if ".json" != l[-5:]:

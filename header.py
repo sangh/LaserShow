@@ -35,8 +35,6 @@ consts = {
     'ExpandPtsSlowXY':  500,#                           " for the slow one.
     'NumSlotsXY':   3,      # How many slots does the fast XY have.
     'NumSlotsSlowXY':   3,  # How many slots does the slow XY have.
-
-    'SendToHosts':          (("localhost",5555),("localhost",4444)),
 }
 # Now unpack so that each string above is it's own variable name.
 # So things like ``window.size = PixPerCell * XGridSize'' work.
@@ -77,9 +75,9 @@ SlotsSlowXY = [ None for i in range( NumSlotsSlowXY ) ]
 # Right now the key (the byte sent) is random, should decide on real numbers.
 # Need to change in the Peripheral list as well.
 Commands = {
-    3:          "Load glyph from slot 'arg'.",
-    ord('T'):   "Set target to `arg'",
-    193:        "Send glyph and write into slot `arg'.",  # After this cmd the next ExpandPtsXY sets of 3 bytes sent are the glyph
+    3:          "Select glyph in slot 'arg'.",
+    ord('T'):   "Move to target index `arg'",
+    193:        "Send glyph and write it into slot `arg'.",  # After this cmd the next ExpandPtsXY sets of 3 bytes sent are the glyph
     112:        "Shrink to `arg',", # If arg is 0 glyph is a point, if 255 it is full-size.
     ord('R'):   "Rotate clockwise `arg' units.", # If arg is 0 then it's upright, 64 or 191 is on it's side, 127 is upside-down
     99:         "Move `arg' ticks clockwise", # That is ticks on the stepper motor.

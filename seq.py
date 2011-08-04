@@ -61,3 +61,14 @@ def seqLoad( name ):
         return su
     else:
         raise NameError("Seq \"%s\" is not valid."%(str(name)))
+
+def seqList():
+    "Return a list of sequences saved already."
+    ls = sorted(os.listdir("seqs"))
+    ret = []
+    for l in ls:
+        if ".json" != l[-5:]:
+            wrn("%s is not named correctly."%(l))
+        else:
+            ret.append( l[:-5] )
+    return ret

@@ -78,7 +78,7 @@ The `comm.py` or Communications Interface
 This class takes care of talking to the hardware.  You can try it out by
 listening with `netcat`, like this (with whatever is defined in header.py):
 
-    nc -vlp 5555 | xxd -c3 -g1
+    nc -vlp 5555 | od -w3 -tu1 -v -Ad
 
 And then in another terminal go to the LaserShow directory and run python,
 then:

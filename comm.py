@@ -27,7 +27,7 @@ def sendCmd( peri, cmd, arg ):
     try:
         rawSend( Peripherals[peri][1], peri, cmd, arg )
     except KeyError:
-        raise KeyError("Peri is invalid."%(str(peri)))
+        raise KeyError("Peri is invalid: '%s'."%(str(peri)))
 
 def setTarget( peri, target ):
     "Send command to set a stepper motor to ths given target number."
