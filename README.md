@@ -234,7 +234,10 @@ else, like music.
 TextUI
 ------
 
-This is what you should probably use, more desc later.
+This is what you should probably use, more desc later.  Using this should be pretty
+striaghtforward.  The one annoying thing is that you have to look up at the top of
+the menu for errors, but the fact that something happend successfully is not
+really always noted.
 
 
 
