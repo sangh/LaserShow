@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import time
+import threading
 from header import *
 import glyph as glyphModule
 import seq as seqModule
@@ -21,11 +23,58 @@ def rawSend( hostPortKey, byte1, byte2, byte3 ):
         raise ValueError("One of the bytes are out of range [0,255]: " +
             "( %s, %s, %s )."%( str(byte1), str(byte2), str(byte3) ) )
 
+# Start recording a seq from all threads at once.
+seqRecorderSem = threading.Semaphore(1)
+seqRecorder = None
+seqRecorderStartTime = 0
+def seqRecorderStart():
+    global seqRecorderSem
+    global seqRecorder
+    global seqRecorderStartTime
+    seqRecorderSem.acquire()
+    if seqRecorder is not None:
+        seqRecorderSem.release()
+        raise ValueError("Already recording, cannot start again.")
+    else:
+        seqRecorder = []
+        seqRecorderStartTime = time.time()
+        seqRecorderSem.release()
+def seqRecorderStop():
+    global seqRecorderSem
+    global seqRecorder
+    seqRecorderSem.acquire()
+    if seqRecorder is None:
+        seqRecorderSem.release()
+        raise ValueError("Not recording, so can't stop.")
+    else:
+        ret = seqRecorder
+        seqRecorder = None
+        seqRecorderSem.release()
+        return ret
+def seqRecorderAdd( b1, b2, b3 ):
+    global seqRecorderSem
+    global seqRecorder
+    global seqRecorderStartTime
+    seqRecorderSem.acquire()
+    if seqRecorder is not None:
+        timeDelay = time.time() - seqRecorderStartTime
+        seqRecorder.append( ( timeDelay, ( b1, b2, b3, ), ) )
+    seqRecorderSem.release()
+def seqRecorderAddGlyphNameToLast( gn ):
+    global seqRecorderSem
+    global seqRecorder
+    seqRecorderSem.acquire()
+    if seqRecorder is not None:
+        seqRecorder[-1] = tuple( list( seqRecorder[-1] ) + [gn,] )
+    seqRecorderSem.release()
+
+
 def sendCmd( peri, cmd, arg ):
     """Send a command to peri with arg.  Everything is 3-byte packets.
     Minimal error checking is done."""
     try:
         rawSend( Peripherals[peri][1], peri, cmd, arg )
+        seqRecorderAdd( peri, cmd, arg )
     except KeyError:
         raise KeyError("Peri is invalid: '%s'."%(str(peri)))
 
@@ -54,6 +103,7 @@ def sendGlyphToPeri( peri, slot, glyph, expandToThisManyPoints ):
     """Use sendGlyphXY or sendGlyphSlowXY instead of this fn."""
     exGlyph = glyphModule.glyphExpandToPts( expandToThisManyPoints, glyph )
     sendCmd( peri, 193, slot )
+    seqRecorderAddGlyphNameToLast( glyph['name'] )
     for p in exGlyph:
         rawSend( Peripherals[peri][1], p[0], p[1], p[2] )
 
@@ -93,7 +143,6 @@ def seqPlay( s ):
     """Play the given seq, won't return until finished."""
     if not seqModule.seqIsValid( s ):
         raise NameError("Given sequence is not valid, not plying.")
-    import time
     wrn("Starting to play seq \"%s\"."%(s[0]))
     startTime = time.time()
     for cmd in s[1:]:
@@ -118,7 +167,6 @@ def seqPlay( s ):
 ### This is all the socket stuff below.
 ###
 import socket
-import threading
 import Queue
 # Thread for a single socket/queue
 def clientThreadRun( hostPort, clientQueue ):

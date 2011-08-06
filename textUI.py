@@ -212,23 +212,6 @@ def cmdGlyphSend( lc = None ):
 def cmdGlyphSlowSend( lc = None ):
     return glyphSendHelper( sendGlyphSlowXY, lc )
 
-def cmdSendBytes( lc = None ):
-    try:
-        if lc is None:
-            p = selPeriID()
-            if p is None:
-                return None
-            ret = eval(raw_input("Enter 3 decimal bytes separated by commans, followed by enter: "))
-            if len(ret) != 3:
-                raise ValueError
-            lc = ( Peripherals[p][1], int(ret[0]), int(ret[1]), int(ret[2]) )
-        rawSend( *lc )
-        return lc
-    except:
-        wrn(sys.exc_info())
-        wrn("Could not send raw cmd, going back to menu.")
-        return None
-
 def cmdPass( lc = None ):
     wrn("Doing nothing.")
     return None
@@ -275,8 +258,14 @@ def cmdPlaySeq( lc = None ):
         return None
 
 def cmdStartRec( lc = None ):
-    wrn("Not implemented yet.")
-    return lc
+    global cmdState
+    global cmdsRec
+    try:
+        seqRecorderStart()
+        cmdState = cmdsRec
+    except:
+        wrn(sys.exc_info())
+    return None
 
 def cmdTickClock( lc = None ):
     try:
@@ -321,14 +310,43 @@ def cmdOpenGlyphCreator( lc = None ):
         wrn("Could not open it, going back to menu.")
     return None
 
+def cmdSendBytes( lc = None ):
+    try:
+        if lc is None:
+            p = selPeriID()
+            if p is None:
+                return None
+            ret = eval(raw_input("Enter 3 decimal bytes separated by commans, followed by enter: "))
+            if len(ret) != 3:
+                raise ValueError
+            lc = ( Peripherals[p][1], int(ret[0]), int(ret[1]), int(ret[2]) )
+        rawSend( *lc )
+        return lc
+    except:
+        wrn(sys.exc_info())
+        wrn("Could not send raw cmd, going back to menu.")
+        return None
+
 def cmdStopRec( lc = None ):
-    wrn("Not implemented yet.")
-    return lc
-
-
-
-
-
+    global cmdState
+    global cmdsNorm
+    try:
+        s = seqRecorderStop()
+        print s
+    except:
+        wrn(sys.exc_info())
+        return None
+    cmdState = cmdsNorm
+    while True:
+        try:
+            n = raw_input("Enter a name for the sequence: ")
+            seqDump( [n,] + s )
+            return None
+        except:
+            wrn(sys.exc_info())
+        n = raw_input("Try to store again ([Yes]/no) ? ")
+        if 0 < len(n)  and  "n" == n[0].lower():
+            return None
 
 
 
@@ -347,7 +365,6 @@ cmdsBoth = (
     ('D', 'Display glyph in a slot on the Slow XY', cmdGlyphSlowSelect),
     ('g', 'Send a glyph to a slot on the XY', cmdGlyphSend),
     ('G', 'Send a glyph to a slot on the slow XY', cmdGlyphSlowSend),
-    ('b', 'Send 3 arbitrary bytes', cmdSendBytes),
     ('0', 'Do nothing', cmdPass),
     (' ', '(spacebar) repeat last command', cmdRepeat),
     ('q', 'Quit or exit', cmdQuit),
@@ -359,6 +376,7 @@ cmdsNorm = (
     ('T', 'Move peri x ticks counterclockwise', cmdTickCounter),
     ('y', 'Set current tick to index', cmdTickIndex),
     ('c', 'Open the glyph creator', cmdOpenGlyphCreator),
+    ('b', 'Send 3 arbitrary bytes', cmdSendBytes),
 )
 cmdsRec = (
     ('S', 'Stop recording sequence', cmdStopRec),
@@ -376,6 +394,9 @@ recSeq = []  # seq to rec
 
 # And finally loop until exit.
 while True:
+    print "Slots:"
+    print "  SlotsXY: ", SlotsXY
+    print "  SlotsSlowXY: ", SlotsSlowXY
     print "Commands:"
     for cmd in cmdsBoth + cmdState:
         print "  Press '%s' to '%s'."%( str(cmd[0]), cmd[1] )
@@ -387,20 +408,9 @@ while True:
     except StopIteration:
         print "Cmd '%s' not found."%(str(c))
     else:
-        if 's' == cmdToRun[0]:  # If start rec
-            cmdLast = (cmd for cmd in cmdsBoth if '0' == cmd[0]).next()
-            cmdLastArg = None
-            cmdState = cmdsRec
-            print "Starting recording not yet implemented."
-        elif 'S' == cmdToRun[0]:  # If stop rec
-            cmdLast = (cmd for cmd in cmdsBoth if '0' == cmd[0]).next()
-            cmdLastArg = None
-            cmdState = cmdsRec
-            print "Stop rec not implemented yet."
+        print "Running '%s'..."%(cmdToRun[1])
+        if ' ' == cmdToRun[0]:  # If repeat.
+            cmdLastArg = cmdToRun[2]( lc = cmdLastArg )
         else:
-            print "Running '%s'..."%(cmdToRun[1])
-            if ' ' == cmdToRun[0]:  # If repeat.
-                cmdLastArg = cmdToRun[2]( lc = cmdLastArg )
-            else:
-                cmdLastArg = cmdToRun[2]( lc = None )
-                cmdLast = cmdToRun
+            cmdLastArg = cmdToRun[2]( lc = None )
+            cmdLast = cmdToRun
