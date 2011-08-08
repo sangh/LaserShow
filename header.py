@@ -26,6 +26,8 @@ if (    'header.py' not in fs
 del fs
 
 
+
+
 # Hard-coded things (constants), see the readme.
 # These should be set to match the real laser.
 consts = {
@@ -86,12 +88,14 @@ Commands = {
 }
 # List is the accepted commands from above.
 # One thread/queue for each _unique_ host/port.
+laser1 = ("Laser1", 2000)
+#laser1 = ('localhost, 5555)
 Peripherals = {
-    ord('X'):   ("XY, the fast one.", ("localhost",5555) ),
-    ord('x'):   ("Slow XY", ("localhost",5555) ),
-    10:         ("One stepper motor description.", ("localhost",5555) ),
-    11:         ("Stepper 2!", ("localhost",5555) ),
-    99:         ("3rd Stepper", ("localhost",5555) ),
+    ord('X'):   ("XY, the fast one.", laser1 ),
+    ord('x'):   ("Slow XY", laser1 ),
+    10:         ("One stepper motor description.", laser1 ),
+    11:         ("Stepper 2!", laser1 ),
+    99:         ("3rd Stepper", laser1 ),
 }
 
 Targets = {

@@ -2,7 +2,7 @@
 
 from header import *
 from glyph import *
-sys.path.append("pyglet-1.1.4")
+sys.path.append("pyglet-hg")
 import pyglet
 
 xpad = 15 # npix boarder
