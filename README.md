@@ -1,7 +1,7 @@
 Overview of the LaserShow Software Interface
 ============================================
 
-This interface is for the SW for the laser show at J&J's party in Aug.
+This interface is for the SW for the laser show at J&J's party in Aug, you know?
 
 
 Definitions
