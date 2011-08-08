@@ -15,7 +15,7 @@ def rawSend( hostPortKey, byte1, byte2, byte3 ):
     the bytes are ints between 0 and 255."""
     try:
         clientThreadSend(   hostPortKey,
-                            chr( byte1 ) + chr( byte2 ) + chr( byte3 ) )
+                            0xff + chr( byte1 ) + chr( byte2 ) + chr( byte3 ) + 0xff )
     except TypeError:
         raise TypeError("One of the bytes aren't ints: " +
             "( %s, %s, %s )."%( str(byte1), str(byte2), str(byte3) ) )
