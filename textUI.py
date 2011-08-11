@@ -272,11 +272,20 @@ def cmdGlyphSlowSend( lc = None ):
     return glyphSendHelper( sendGlyphSlowXY, lc )
 
 def cmdGamePad( lc = None ):
-    p = subprocess.Popen( [
-        "/usr/bin/jstest",
-        "--event",
-        "/dev/input/by-id/usb-Logitech_Logitech_RumblePad_2_USB-joystick",
-        ], shell=False, stdout=subprocess.PIPE )
+    try:
+        p = subprocess.Popen( [
+            "/usr/bin/jstest",
+            "--event",
+            "/dev/input/by-id/usb-Logitech_Logitech_RumblePad_2_USB-joystick",
+            ], shell=False, stdout=subprocess.PIPE )
+        print p.stdout.poll()
+    except:
+        wrn(sys.exc_info())
+    try:
+        p.terminate()
+        p.kill()
+    except:
+        pass
     return None
 
 def cmdPass( lc = None ):
