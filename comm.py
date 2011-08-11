@@ -15,7 +15,7 @@ def rawSend( hostPortKey, byte1, byte2, byte3 ):
     the bytes are ints between 0 and 255."""
     try:
         clientThreadSend(   hostPortKey,
-                            0xff + chr( byte1 ) + chr( byte2 ) + chr( byte3 ) + 0xff )
+                            '\xff' + chr( byte1 ) + chr( byte2 ) + chr( byte3 ) + '\xff' )
     except TypeError:
         raise TypeError("One of the bytes aren't ints: " +
             "( %s, %s, %s )."%( str(byte1), str(byte2), str(byte3) ) )
@@ -170,16 +170,28 @@ import socket
 import Queue
 # Thread for a single socket/queue
 def clientThreadRun( hostPort, clientQueue ):
+    "hostPort could be a string, a file to use."
     def getClientSocket( hostPort ):
+        "Return 2 fn, to send and close."
         t = 0
         while True:
             try:
-                s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-                s.connect( hostPort )
-                wrn("Connected to %s."%( str( hostPort ) ) )
-                return s
+                if isinstance( hostPort, str ):
+                    f = open( hostPort, "a" )
+                    def sendfn( s ):
+                        f.write( s )
+                        f.flush()
+                    return ( sendfn, f.close )
+                else:  # should be a tuple, ( host, port )
+                    s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
+                    s.connect( hostPort )
+                    def closefn():
+                        soc.shutdown(socket.SHUT_RDWR)
+                        soc.close()
+                    return ( s.sendall, closefn )
             except:
                 if 0 == t:
+                    wrn(sys.exc_info())
                     wrn("Problem connecting to " +
                         "%s... will keep trying."%( str( hostPort ) ) )
                     t = 30000
@@ -187,7 +199,8 @@ def clientThreadRun( hostPort, clientQueue ):
                     t = t - 1
     while True:
         try:
-            soc = getClientSocket( hostPort )
+            sendfn, closefn = getClientSocket( hostPort )
+            wrn("Connected to %s."%( str( hostPort ) ) )
             while True:
                 try:
                     thrownaway = clientQueue.get( False )
@@ -195,13 +208,12 @@ def clientThreadRun( hostPort, clientQueue ):
                     break
             wrn("%s: Queue dumped."%(str(hostPort)))
             while True:
-                soc.sendall( clientQueue.get( True, None ) )
+                sendfn( clientQueue.get( True, None ) )
         except Exception, detail:
             wrn( detail )
             wrn( "Caught an exception, re-connecting." )
             try:
-                soc.shutdown(socket.SHUT_RDWR)
-                soc.close()
+                closefn()
             except:
                 pass
 

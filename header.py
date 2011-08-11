@@ -89,7 +89,9 @@ Commands = {
 # List is the accepted commands from above.
 # One thread/queue for each _unique_ host/port.
 laser1 = ("Laser1", 2000)
-#laser1 = ('localhost, 5555)
+#laser1 = ('localhost', 5555)
+# Or if you want to write to a file:
+#laser1 = "/dev/cu.xxxxxx"
 Peripherals = {
     ord('X'):   ("XY, the fast one.", laser1 ),
     ord('x'):   ("Slow XY", laser1 ),
