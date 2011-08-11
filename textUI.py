@@ -1,6 +1,7 @@
 #!/usr/bin/python
 "Simple text UI"
 
+import subprocess
 from pprint import pprint
 from glyph import *
 from seq import *
@@ -76,6 +77,64 @@ c2i = {
     'x':    33,
     'y':    34,
     'z':    35,
+    '-':    36,
+    '=':    37,
+    '[':    38,
+    ']':    39,
+    '\\':   40,
+    ';':    41,
+    '\'':   42,
+    ',':    43,
+    '.':    44,
+    '/':    45,
+    '_':    46,
+    '+':    47,
+    '{':    48,
+    '}':    49,
+    '|':    50,
+    ':':    51,
+    '"':    52,
+    '<':    53,
+    '>':    54,
+    '?':    55,
+    'A':    56,
+    'B':    57,
+    'C':    58,
+    'd':    59,
+    'E':    60,
+    'F':    61,
+    'G':    62,
+    'H':    63,
+    'I':    64,
+    'J':    65,
+    'K':    66,
+    'L':    67,
+    'M':    68,
+    'N':    69,
+    'O':    70,
+    'P':    71,
+    'Q':    72,
+    'R':    73,
+    'S':    74,
+    'T':    75,
+    'U':    76,
+    'V':    77,
+    'W':    78,
+    'X':    79,
+    'Y':    80,
+    'Z':    81,
+    '`':    82,
+    '~':    83,
+    '!':    84,
+    '@':    85,
+    '#':    86,
+    '$':    87,
+    '%':    88,
+    '^':    89,
+    '&':    90,
+    '*':    91,
+    '(':    92,
+    ')':    93,
 }
 nIndexes = len( c2i )
 def i2c( i ):
@@ -211,6 +270,14 @@ def cmdGlyphSend( lc = None ):
 
 def cmdGlyphSlowSend( lc = None ):
     return glyphSendHelper( sendGlyphSlowXY, lc )
+
+def cmdGamePad( lc = None ):
+    p = subprocess.Popen( [
+        "/usr/bin/jstest",
+        "--event",
+        "/dev/input/by-id/usb-Logitech_Logitech_RumblePad_2_USB-joystick",
+        ], shell=False, stdout=subprocess.PIPE )
+    return None
 
 def cmdPass( lc = None ):
     wrn("Doing nothing.")
@@ -359,12 +426,22 @@ def cmdStopRec( lc = None ):
 # Cmds unique across all three tulpes.
 cmdsBoth = (
     ('m', 'Move peripheral to target index', cmdSelTarget),
+    ('[', 'Set step "10" to index "0"', lambda(lc): cmdSelTarget((10,0))),
+    (']', 'Set step "10" to index "1"', lambda(lc): cmdSelTarget((10,1))),
+    ('\\','Set step "10" to index "2"', lambda(lc): cmdSelTarget((10,2))),
+    ('l', 'Set step "11" to index "0"', lambda(lc): cmdSelTarget((11,0))),
+    (';', 'Set step "11" to index "1"', lambda(lc): cmdSelTarget((11,1))),
+    ('\'','Set step "11" to index "2"', lambda(lc): cmdSelTarget((11,2))),
+    (',', 'Set step "99" to index "0"', lambda(lc): cmdSelTarget((99,0))),
+    ('.', 'Set step "99" to index "1"', lambda(lc): cmdSelTarget((99,1))),
+    ('/', 'Set step "99" to index "2"', lambda(lc): cmdSelTarget((99,2))),
     ('o', 'Set XY rotation', cmdSetRotation),
     ('h', 'Shrink current glyph', cmdShrink),
     ('d', 'Display glyph in a slot on the XY', cmdGlyphSelect),
     ('D', 'Display glyph in a slot on the Slow XY', cmdGlyphSlowSelect),
     ('g', 'Send a glyph to a slot on the XY', cmdGlyphSend),
     ('G', 'Send a glyph to a slot on the slow XY', cmdGlyphSlowSend),
+    ('P', 'Open the gamepad controller', cmdGamePad),
     ('0', 'Do nothing', cmdPass),
     (' ', '(spacebar) repeat last command', cmdRepeat),
     ('q', 'Quit or exit', cmdQuit),
