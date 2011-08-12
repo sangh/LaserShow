@@ -41,6 +41,14 @@ except Queue.Empty:
 # Lines from gamepad.
 # Event: type 2, time 17339776, number 1, value 19255
 r=re.compile("^Event: type ([0-9]), time ([0-9]+), number ([0-9]?[0-9]), value (-?[0-9]+)$")
+def parseGamePad(line):
+    rm = r.match(line)
+    if not rm:
+        print "Could not match gamepad line: " + line
+        return None
+    else:
+        return None
+        
 # Until Enter is pressed.
 while kt.isAlive():
     try:
