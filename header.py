@@ -85,6 +85,8 @@ Commands = {
     99:         "Move `arg' ticks clockwise", # That is ticks on the stepper motor.
     12:         "Move `arg' ticks counterclockwise", # That is ticks on the stepper motor.
     5:          "Set current tick to index `arg'",
+    6:          "Move an XY x-axis to `arg' position.",
+    7:          "Move an XY y-axis to `arg' position.",
 }
 # List is the accepted commands from above.
 # One thread/queue for each _unique_ host/port.

@@ -274,10 +274,8 @@ def cmdGlyphSlowSend( lc = None ):
     return glyphSendHelper( sendGlyphSlowXY, lc )
 
 def cmdGamePad( lc = None ):
-    keyBoardThread = threading.Thread(target=lambda: raw_input())
-    keyBoardThread.daemon = True
-    keyBoardThread.start()
-    wrn("Press Enter to exit back to menu.")
+    def gp2byte( s ):
+        return int((int(s)+32767)*256.0/65536)
     try:
         gamePadProc = subprocess.Popen( [
             "/usr/bin/jstest",
@@ -285,27 +283,60 @@ def cmdGamePad( lc = None ):
             "/dev/input/by-id/usb-Logitech_Logitech_RumblePad_2_USB-joystick",
             ], shell=False, stdout=subprocess.PIPE )
 
+        wrn("")
+        wrn("Press button # 9 to exit.")
+        wrn("")
         # Lines from gamepad.
         # Event: type 2, time 17339776, number 1, value 19255
-        r=re.compile("^Event: type ([0-9]), time ([0-9]+), number ([0-9]?[0-9]), value (-?[0-9]+)$")
-        while keyBoardThread.isAlive():
+        r=re.compile("^Event: type ([0-9]+), time ([0-9]+), number ([0-9]?[0-9]), value (-?[0-9]+)$")
+        while True:
             line = gamePadProc.stdout.readline()
+            if "" == line:
+                if gamePadProc.poll() is not None:
+                    break # proc died.
             rm = r.match(line)
-            if not rm:
-                raise NameError("Line invalid: "+line.strip())
+            if rm:
+                btype = int(rm.group(1))
+                if 1 == btype:
+                    if "0" == rm.group(4):
+                        continue  # ignore all button releases
+                    butt = int(rm.group(3))
+                    if 8 == butt:  # Button # 9
+                        break # exit button
+                    elif 0 == butt:  # button # 1
+                        cmdSelTarget((10,0))
+                    elif 1 == butt:  # button # 2
+                        cmdSelTarget((10,1))
+                    elif 2 == butt:  # button # 3
+                        cmdSelTarget((10,2))
+                    elif 3 == butt:  # button # 4
+                        cmdSelTarget((11,0))
+                    elif 4 == butt:  # button # 5
+                        cmdSelTarget((11,1))
+                    elif 5 == butt:  # button # 6
+                        cmdSelTarget((11,2))
+                    elif 6 == butt:  # button # 6
+                        cmdSelTarget((99,0))
+                    elif 7 == butt:  # button # 8
+                        cmdSelTarget((99,1))
+                    elif 9 == butt:  # button # 10
+                        cmdSelTarget((99,2))
+                elif 2 == btype:
+                    butt = int(rm.group(3))
+                    if 2 == butt:  # lower right joystick x-axis
+                        sendCmd(ord('x'), 6, gp2byte( rm.group(4) ) )
+                    elif 3 == butt:  # lower right joystick y-axis
+                        sendCmd(ord('x'), 7, gp2byte( rm.group(4) ) )
+                else:  # ignore other types.
+                    continue
             else:
-                t = int(rm.group(1))
-                ti = int(rm.group(2))
-                n = int(rm.group(3))
-                v = int(rm.group(4))
-                print l.strip()
-                print "t=%d  time=%d  num=%d  val=%d"%(t,ti,n,v)
+                wrn( line.strip() )
     except:
         wrn(sys.exc_info())
     finally:
         try:
-            p.terminate()
-            p.kill()
+            gamePadProc.terminate()
+            gamePadProc.kill()
         except:
             pass
     return None
