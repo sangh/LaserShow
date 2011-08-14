@@ -82,7 +82,7 @@ def setTarget( peri, target ):
     """Send command to set a stepper motor to ths given target number.
     See header.py for what the numbers are for, and the readme for examples."""
     if target in Targets.keys():
-        sendCmd( peri, ord('T'), target )
+        sendCmd( peri, 3, target )
     else:
         raise NameError("Invaild target (%s)."%(str(target)))
 
@@ -90,19 +90,19 @@ def selectGlyphXY( slot ):
     """Make the fast XY display the glyph in `slot'."""
     if slot >= NumSlotsXY:
         raise NameError("Slot \"%d\" is invalid for the fast XY."%( slot ) )
-    sendCmd( ord('X'), 3, slot )
+    sendCmd( 5, 7, slot )
 
 def selectGlyphSlowXY( slot ):
     """Make the slow XY display the glyph in `slot'."""
     if slot >= NumSlotsSlowXY:
         raise NameError("Slot \"%d\" is invalid for the slow XY."%( slot ) )
-    sendCmd( ord('x'), 3, slot )
+    sendCmd( 6, 3, slot )
 
 # Use sendGlyphXY or sendGlyphSlowXY instead of this fn.
 def sendGlyphToPeri( peri, slot, glyph, expandToThisManyPoints ):
     """Use sendGlyphXY or sendGlyphSlowXY instead of this fn."""
     exGlyph = glyphModule.glyphExpandToPts( expandToThisManyPoints, glyph )
-    sendCmd( peri, 193, slot )
+    sendCmd( peri, 30, slot )
     seqRecorderAddGlyphNameToLast( glyph['name'] )
     for p in exGlyph:
         rawSend( Peripherals[peri][1], p[0], p[1], p[2] )
@@ -111,7 +111,7 @@ def sendGlyphXY( slot, glyph ):
     """Send glyph to the XY."""
     if slot >= NumSlotsXY:
         raise NameError("Slot \"%d\" is invalid for the fast XY."%( slot ) )
-    sendGlyphToPeri( ord('X'), slot, glyph, ExpandPtsXY )
+    sendGlyphToPeri( 5, slot, glyph, ExpandPtsXY )
     SlotsXY[slot] = glyph['name']
 
 
@@ -119,7 +119,7 @@ def sendGlyphSlowXY( slot, glyph ):
     """Send glyph to the slow XY."""
     if slot >= NumSlotsSlowXY:
         raise NameError("Slot \"%d\" is invalid for the slow XY."%( slot ) )
-    sendGlyphToPeri( ord('x'), slot, glyph, ExpandPtsSlowXY )
+    sendGlyphToPeri( 6, slot, glyph, ExpandPtsSlowXY )
     SlotsSlowXY[slot] = glyph['name']
 
 # Really just an example for the rest of the commands.
@@ -129,14 +129,14 @@ def rotateXY( angle ):
     0.25 is 90 degrees on the right (clockwise) side,
     0.5 is upside-down,
     0.74 is 90 degrees on the left side."""
-    sendCmd( ord('X'), ord('R'), int(255*angle) )
+    sendCmd( 5, 41, int(255*angle) )
 
 def shrinkXY( size ):
     """Tell fast XY to shrink to size: 
     0.0 is shrink to nothing,
     1.0 is keep it full size,
     0.5 is make it half size."""
-    sendCmd( ord('X'), 112, int(255*size) )
+    sendCmd( 5, 40, int(255*size) )
 
 
 def seqPlay( s ):
@@ -153,9 +153,9 @@ def seqPlay( s ):
             sendCmd( *cmd[1] )
         else:
             # Is 3
-            if ord('X') == cmd[1][0]:
+            if 5 == cmd[1][0]:
                 sendGlyphXY( cmd[1][1], glyphModule.glyphLoad( cmd[2] ) )
-            elif ord('x') == cmd[1][0]:
+            elif 6 == cmd[1][0]:
                 sendGlyphSlowXY( cmd[1][1], glyphModule.glyphLoad( cmd[2] ) )
             else:
                 wrn('Not loading glyph \"%s\" as the peri \"%d\" is unknown.'%(cmd[2],cmd[1][0]))

@@ -77,36 +77,49 @@ SlotsSlowXY = [ None for i in range( NumSlotsSlowXY ) ]
 # Right now the key (the byte sent) is random, should decide on real numbers.
 # Need to change in the Peripheral list as well.
 Commands = {
-    3:          "Select glyph in slot 'arg'.",
-    ord('T'):   "Move to target index `arg'",
-    193:        "Send glyph and write it into slot `arg'.",  # After this cmd the next ExpandPtsXY sets of 3 bytes sent are the glyph
-    112:        "Shrink to `arg',", # If arg is 0 glyph is a point, if 255 it is full-size.
-    ord('R'):   "Rotate clockwise `arg' units.", # If arg is 0 then it's upright, 64 or 191 is on it's side, 127 is upside-down
-    99:         "Move `arg' ticks clockwise", # That is ticks on the stepper motor.
-    12:         "Move `arg' ticks counterclockwise", # That is ticks on the stepper motor.
-    5:          "Set current tick to index `arg'",
-    6:          "Move an XY x-axis to `arg' position.",
-    7:          "Move an XY y-axis to `arg' position.",
+    0:          "reset index counters",
+    1: 			"tick CW without updating index",	# For hand-zeroing
+    2:			"tick CCW without updating index",	# For hand-zeroing
+    3:			"move to index slot",	# Not implemented on MCU
+    4:			"move to index raw count",
+    5:			"set target slots",	# The three byte command structure doesn't make it easy to do this
+    6:			"set target slots, continued",  # all targets have to be loaded if any are loaded
+    7:            "sel glyph in slot.",
+    30:         "Send glyph and write it into slot `arg'.",  # After this cmd the next ExpandPtsXY sets of 3 bytes sent are the glyph
+    40:         "Shrink current glyph to `arg',", # If arg is 0 glyph is a point, if 255 it is full-size.
+    41:   		"set rotation to 'arg' where 255=360 degrees", # If arg is 0 then it's upright, 64 or 191 is on it's side, 127 is upside-down
+ 
+    50:			"Set speed of DG wheel- signed 8 bit number 0= still",
+
+    60:			"Go to X position",
+    61:			"Go to Y position",
+    
+    100:         "Move `arg' ticks clockwise", # That is ticks on the stepper motor.
+    101:         "Move `arg' ticks counterclockwise", # That is ticks on the stepper motor.
+    102:		 "attempt to auto-zero",
 }
 # List is the accepted commands from above.
 # One thread/queue for each _unique_ host/port.
 laser1 = ("Laser1", 2000)
-#laser1 = ('localhost', 5555)
-# Or if you want to write to a file:
-#laser1 = "/dev/cu.xxxxxx"
-#laser1 = "/tmp/s"
+#laser1 = ('localhost, 5555)
+#Or if you want to write to a file:
+#laser1 = "/dev/cu.XXXXX"
 Peripherals = {
-    ord('X'):   ("XY, the fast one.", laser1 ),
-    ord('x'):   ("Slow XY", laser1 ),
-    10:         ("One stepper motor description.", laser1 ),
-    11:         ("Stepper 2!", laser1 ),
-    99:         ("3rd Stepper", laser1 ),
+    0:   ("Green Stepper", laser1 ),	# accepts tune +- commands plus go-to-index#
+    1:   ("Red Stepper", laser1 ),		# accepts tune +- commands plus go-to-index#
+    2:   ("Blue Stepper", laser1 ),		# accepts tune +- commands plus go-to-index#
+    3:   ("DG 6track speed", laser1 ),	# accepts only a speed as a signed number indicating direction
+    4:   ("DG sector select", laser1 ),	# accepts a sector number to select, like a slot select for a glyph- same command
+    5:   ("HS XY", laser1 ),			# accepts many commands, play glyph, go to position
+    6:   ("LS XY", laser1 ),			# same as above, but an order of magnitude slower
+    7:   ("Green Blanking", laser1 ),	# accepts just an on/off to turn the green laser on or off
+    8:   ("Red Blanking", laser1 ),		# same as above 
 }
 
 Targets = {
-    0:  "The diffGrat, slowXY, XY",
-    1:  "Target one is ...",
-    2:  "Target the second is undescribed.",
+    0:  "Beamnet1",
+    1:  "Beamnet2",
+    2:  "Beamnet3...",
 }
 
 def peripheralCommandIsValid( peri, cmd ):

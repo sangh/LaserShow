@@ -182,7 +182,7 @@ def selTargetHelper( lasercmd, lc ):
     return lc
 
 def cmdSelTarget( lc = None ):
-    return selTargetHelper( ord('T'), lc )
+    return selTargetHelper( 3, lc )
 
 def cmdSetRotation( lc = None ):
     if lc is None:
@@ -304,29 +304,29 @@ def cmdGamePad( lc = None ):
                     if 8 == butt:  # Button # 9
                         break # exit button
                     elif 0 == butt:  # button # 1
-                        cmdSelTarget((10,0))
+                        cmdSelTarget((0,0))
                     elif 1 == butt:  # button # 2
-                        cmdSelTarget((10,1))
+                        cmdSelTarget((0,1))
                     elif 2 == butt:  # button # 3
-                        cmdSelTarget((10,2))
+                        cmdSelTarget((0,2))
                     elif 3 == butt:  # button # 4
-                        cmdSelTarget((11,0))
+                        cmdSelTarget((1,0))
                     elif 4 == butt:  # button # 5
-                        cmdSelTarget((11,1))
+                        cmdSelTarget((1,1))
                     elif 5 == butt:  # button # 6
-                        cmdSelTarget((11,2))
+                        cmdSelTarget((1,2))
                     elif 6 == butt:  # button # 6
-                        cmdSelTarget((99,0))
+                        cmdSelTarget((2,0))
                     elif 7 == butt:  # button # 8
-                        cmdSelTarget((99,1))
+                        cmdSelTarget((2,1))
                     elif 9 == butt:  # button # 10
-                        cmdSelTarget((99,2))
+                        cmdSelTarget((2,2))
                 elif 2 == btype:
                     butt = int(rm.group(3))
                     if 2 == butt:  # lower right joystick x-axis
-                        sendCmd(ord('x'), 6, gp2byte( rm.group(4) ) )
+                        sendCmd(6, 6, gp2byte( rm.group(4) ) )
                     elif 3 == butt:  # lower right joystick y-axis
-                        sendCmd(ord('x'), 7, gp2byte( rm.group(4) ) )
+                        sendCmd(6, 7, gp2byte( rm.group(4) ) )
                 else:  # ignore other types.
                     continue
             else:
@@ -488,15 +488,15 @@ def cmdStopRec( lc = None ):
 # Cmds unique across all three tulpes.
 cmdsBoth = (
     ('m', 'Move peripheral to target index', cmdSelTarget),
-    ('[', 'Set step "10" to index "0"', lambda(lc): cmdSelTarget((10,0))),
-    (']', 'Set step "10" to index "1"', lambda(lc): cmdSelTarget((10,1))),
-    ('\\','Set step "10" to index "2"', lambda(lc): cmdSelTarget((10,2))),
-    ('l', 'Set step "11" to index "0"', lambda(lc): cmdSelTarget((11,0))),
-    (';', 'Set step "11" to index "1"', lambda(lc): cmdSelTarget((11,1))),
-    ('\'','Set step "11" to index "2"', lambda(lc): cmdSelTarget((11,2))),
-    (',', 'Set step "99" to index "0"', lambda(lc): cmdSelTarget((99,0))),
-    ('.', 'Set step "99" to index "1"', lambda(lc): cmdSelTarget((99,1))),
-    ('/', 'Set step "99" to index "2"', lambda(lc): cmdSelTarget((99,2))),
+    ('[', 'Set step "0" to index "0"', lambda(lc): cmdSelTarget((0,0))),
+    (']', 'Set step "0" to index "1"', lambda(lc): cmdSelTarget((0,1))),
+    ('\\','Set step "0" to index "2"', lambda(lc): cmdSelTarget((0,2))),
+    ('l', 'Set step "1" to index "0"', lambda(lc): cmdSelTarget((1,0))),
+    (';', 'Set step "1" to index "1"', lambda(lc): cmdSelTarget((1,1))),
+    ('\'','Set step "1" to index "2"', lambda(lc): cmdSelTarget((1,2))),
+    (',', 'Set step "2" to index "0"', lambda(lc): cmdSelTarget((2,0))),
+    ('.', 'Set step "2" to index "1"', lambda(lc): cmdSelTarget((2,1))),
+    ('/', 'Set step "2" to index "2"', lambda(lc): cmdSelTarget((2,2))),
     ('o', 'Set XY rotation', cmdSetRotation),
     ('h', 'Shrink current glyph', cmdShrink),
     ('d', 'Display glyph in a slot on the XY', cmdGlyphSelect),
