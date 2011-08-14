@@ -404,7 +404,7 @@ def cmdTickClock( lc = None ):
                 return None
             tic = int(eval(raw_input("Enter num ticks, followed by enter: ")))
             chr(tic)
-            lc = ( p, 99, tic )
+            lc = ( p, 1, tic )
         sendCmd( *lc )
         return lc
     except:
@@ -420,13 +420,24 @@ def cmdTickCounter( lc = None ):
                 return None
             tic = int(eval(raw_input("Enter num ticks, followed by enter: ")))
             chr(tic)
-            lc = ( p, 12, tic )
+            lc = ( p, 2, tic )
         sendCmd( *lc )
         return lc
     except:
         wrn(sys.exc_info())
         wrn("Could not tic clock, going back to menu.")
         return None
+idxs = [0,0,0]
+def cmdMoveToIdx( grb, idx ):
+    global idxs
+    oldidx = idxs[grb]
+    if idx > oldidx:
+        for i in range( idx - oldidx ):
+            sendCmd(grb, 2, 1)
+    else:
+        for i in range( oldidx - idx ):
+            sendCmd(grb, 1, 1)
+    idxs[grb] = idx
 
 def cmdTickIndex( lc = None ):
     return selTargetHelper( 5, lc )
@@ -487,38 +498,67 @@ def cmdStopRec( lc = None ):
 # List the char to sel, fn, & desc.
 # Cmds unique across all three tulpes.
 cmdsBoth = (
-    ('m', 'Move peripheral to target index', cmdSelTarget),
-    ('[', 'Set step "0" to index "0"', lambda(lc): cmdSelTarget((0,0))),
-    (']', 'Set step "0" to index "1"', lambda(lc): cmdSelTarget((0,1))),
-    ('\\','Set step "0" to index "2"', lambda(lc): cmdSelTarget((0,2))),
-    ('l', 'Set step "1" to index "0"', lambda(lc): cmdSelTarget((1,0))),
-    (';', 'Set step "1" to index "1"', lambda(lc): cmdSelTarget((1,1))),
-    ('\'','Set step "1" to index "2"', lambda(lc): cmdSelTarget((1,2))),
-    (',', 'Set step "2" to index "0"', lambda(lc): cmdSelTarget((2,0))),
-    ('.', 'Set step "2" to index "1"', lambda(lc): cmdSelTarget((2,1))),
-    ('/', 'Set step "2" to index "2"', lambda(lc): cmdSelTarget((2,2))),
-    ('o', 'Set XY rotation', cmdSetRotation),
-    ('h', 'Shrink current glyph', cmdShrink),
-    ('d', 'Display glyph in a slot on the XY', cmdGlyphSelect),
-    ('D', 'Display glyph in a slot on the Slow XY', cmdGlyphSlowSelect),
-    ('g', 'Send a glyph to a slot on the XY', cmdGlyphSend),
-    ('G', 'Send a glyph to a slot on the slow XY', cmdGlyphSlowSend),
-    ('P', 'Open the gamepad controller', cmdGamePad),
+    ('M', 'Move peripheral to target index', cmdSelTarget),
+    ('1', 'Move green 1 idx left', lambda(lc): cmdTickCounter((0,2,1))),
+    ('2', 'Move green 1 idx right', lambda(lc): cmdTickClock((0,1,1))),
+    ('3', 'Move red 1 idx left', lambda(lc): cmdTickCounter((1,2,1))),
+    ('4', 'Move red 1 idx right', lambda(lc): cmdTickClock((1,1,1))),
+    ('5', 'Move blue 1 idx left', lambda(lc): cmdTickClock((2,1,1))),
+    ('6', 'Move blue 1 idx right', lambda(lc): cmdTickCounter((2,2,1))),
+    ('q', 'Green idx 0', lambda(lc): cmdMoveToIdx(0,0)),
+    ('w', 'Green idx 1', lambda(lc): cmdMoveToIdx(0,1)),
+    ('e', 'Green idx 2', lambda(lc): cmdMoveToIdx(0,2)),
+    ('r', 'Green idx 3', lambda(lc): cmdMoveToIdx(0,3)),
+    ('t', 'Green idx 4', lambda(lc): cmdMoveToIdx(0,4)),
+    ('y', 'Green idx 5', lambda(lc): cmdMoveToIdx(0,5)),
+    ('u', 'Green idx 6', lambda(lc): cmdMoveToIdx(0,6)),
+    ('i', 'Green idx 7', lambda(lc): cmdMoveToIdx(0,7)),
+    ('o', 'Green idx 8', lambda(lc): cmdMoveToIdx(0,8)),
+    ('p', 'Green idx 9', lambda(lc): cmdMoveToIdx(0,9)),
+    ('[', 'Green idx 10', lambda(lc): cmdMoveToIdx(0,10)),
+    ('a', 'Red idx 0', lambda(lc): cmdMoveToIdx(1,0)),
+    ('s', 'Red idx 1', lambda(lc): cmdMoveToIdx(1,1)),
+    ('d', 'Red idx 2', lambda(lc): cmdMoveToIdx(1,2)),
+    ('f', 'Red idx 3', lambda(lc): cmdMoveToIdx(1,3)),
+    ('g', 'Red idx 4', lambda(lc): cmdMoveToIdx(1,4)),
+    ('h', 'Red idx 5', lambda(lc): cmdMoveToIdx(1,5)),
+    ('j', 'Red idx 6', lambda(lc): cmdMoveToIdx(1,6)),
+    ('k', 'Red idx 7', lambda(lc): cmdMoveToIdx(1,7)),
+    ('l', 'Red idx 8', lambda(lc): cmdMoveToIdx(1,8)),
+    (';', 'Red idx 9', lambda(lc): cmdMoveToIdx(1,9)),
+    ('\'', 'Red idx 10', lambda(lc): cmdMoveToIdx(1,10)),
+    ('z', 'Blue idx 0', lambda(lc): cmdMoveToIdx(2,0)),
+    ('x', 'Blue idx 1', lambda(lc): cmdMoveToIdx(2,1)),
+    ('c', 'Blue idx 2', lambda(lc): cmdMoveToIdx(2,2)),
+    ('v', 'Blue idx 3', lambda(lc): cmdMoveToIdx(2,3)),
+    ('b', 'Blue idx 4', lambda(lc): cmdMoveToIdx(2,4)),
+    ('n', 'Blue idx 5', lambda(lc): cmdMoveToIdx(2,5)),
+    ('m', 'Blue idx 6', lambda(lc): cmdMoveToIdx(2,6)),
+    (',', 'Blue idx 7', lambda(lc): cmdMoveToIdx(2,7)),
+    ('.', 'Blue idx 8', lambda(lc): cmdMoveToIdx(2,8)),
+    ('/', 'Blue idx 9', lambda(lc): cmdMoveToIdx(2,9)),
+    #('O', 'Set XY rotation', cmdSetRotation),
+    #('H', 'Shrink current glyph', cmdShrink),
+    #('F', 'Display glyph in a slot on the XY', cmdGlyphSelect),
+    #('D', 'Display glyph in a slot on the Slow XY', cmdGlyphSlowSelect),
+    #('T', 'Send a glyph to a slot on the XY', cmdGlyphSend),
+    #('G', 'Send a glyph to a slot on the slow XY', cmdGlyphSlowSend),
+    #('P', 'Open the gamepad controller', cmdGamePad),
     ('0', 'Do nothing', cmdPass),
     (' ', '(spacebar) repeat last command', cmdRepeat),
-    ('q', 'Quit or exit', cmdQuit),
+    ('Q', 'Quit or exit', cmdQuit),
 )
 cmdsNorm = (
-    ('p', 'Play sequence', cmdPlaySeq),
-    ('s', 'Start recording sequence', cmdStartRec),
-    ('t', 'Move peripheral x ticks clockwise', cmdTickClock),
-    ('T', 'Move peri x ticks counterclockwise', cmdTickCounter),
-    ('y', 'Set current tick to index', cmdTickIndex),
-    ('c', 'Open the glyph creator', cmdOpenGlyphCreator),
-    ('b', 'Send 3 arbitrary bytes', cmdSendBytes),
+    ('L', 'Play sequence', cmdPlaySeq),
+    ('S', 'Start recording sequence', cmdStartRec),
+    ('Z', 'Move peripheral x ticks clockwise', cmdTickClock),
+    ('X', 'Move peri x ticks counterclockwise', cmdTickCounter),
+    ('Y', 'Set current tick to index', cmdTickIndex),
+    ('C', 'Open the glyph creator', cmdOpenGlyphCreator),
+    ('B', 'Send 3 arbitrary bytes', cmdSendBytes),
 )
 cmdsRec = (
-    ('S', 'Stop recording sequence', cmdStopRec),
+    ('A', 'Stop recording sequence', cmdStopRec),
 )
 cmdLast = (cmd for cmd in cmdsBoth if '0' == cmd[0]).next()
 cmdLastArg = None
